@@ -47,5 +47,15 @@ extern unsigned char NMEA_get(NMEA_msg_t *const msg, unsigned char index, char *
 // retreive the command string from msg into buf
 #define NMEA_command(msg, buf)		NMEA_get(msg, 0, buf)
 
+// -- EXTRA (NMEA_extra.c)
+// clear the passed message
+extern void NMEA_void(NMEA_msg_t *const msg);
+// return the numeric value of the index'th argument in msg, converting it using the specified base
+extern unsigned long NMEA_get_number(NMEA_msg_t *const msg, const unsigned char index, const unsigned char base);
+// add the passed number using the passed string format
+extern char NMEA_add_number(NMEA_msg_t *const msg, const unsigned long number, unsigned char *const format);
+// asserts the equality of the index'th argument in msg and the passed string
+extern char NMEA_arg_equal(NMEA_msg_t *const msg, const unsigned long index, unsigned char *const string);
+
 // -- end of file
 

@@ -18,6 +18,12 @@ unsigned char i;
 	return msg->Checksum;
 }
 
+void NMEA_void(NMEA_msg_t *const msg)
+{
+	memset(msg, 0, sizeof(NMEA_msg_t));
+	msg->State = e_NMEA_INVALID;
+}
+
 unsigned char NMEA_argc(NMEA_msg_t *const msg)
 {
 unsigned char i;
@@ -96,7 +102,7 @@ static char STARS, STAR[2];
 	{
 	case e_NMEA_DOLLAR:
 		msg->String[msg->Length++] = byte;
-	break;
+		break;
 
 	case e_NMEA_STAR:
 		STAR[STARS++] = byte;
@@ -106,7 +112,7 @@ static char STARS, STAR[2];
 			return msg->State == e_NMEA_INVALID;
 		NMEA_argc(msg);
 		msg->State = e_NMEA_VALID;
-	break;
+		break;
 	}
 }
 
