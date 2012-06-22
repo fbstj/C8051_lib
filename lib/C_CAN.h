@@ -8,8 +8,8 @@ typedef struct T_CAN_FRAME {
 	long ID;				// the message identifier
 	unsigned char Data[8];	// the 8 bytes of the packet
 	char Length;			// the number of bytes in the packet (DLC field)
-	char Extended : 1;		// the frame type (1: 29bit, 0: 11bit)
-	char Remote : 1;		// remote frame
+	char Extended;			// the frame type (1: 29bit, 0: 11bit)
+	char Remote;			// remote frame
 } CAN_frame_t;
 
 // initialises a frame
