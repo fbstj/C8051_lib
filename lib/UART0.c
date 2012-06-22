@@ -83,14 +83,4 @@ void UART0_write(unsigned char * buffer, unsigned char length)
 
 int UART0_pending(void) { return (int)UART0_state.Received - (int)UART0_state.Read; }
 
-unsigned char UART0_read(unsigned char *buffer, unsigned char length)
-{
-unsigned char i = 0;
-	while (length -- && UART0_pending() > 0)
-	{
-		*buffer++ = UART0_state.RX[UART0_state.Read++];
-		i++;
-	}
-	return i;
-}
-
+unsigned char UART0_read_byte(void) { return UART0_state.RX[UART0_state.Read++]; }

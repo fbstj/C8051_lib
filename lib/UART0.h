@@ -10,7 +10,7 @@ extern void UART0_init(unsigned long baudrate);
 extern void UART0_write(unsigned char *buffer, unsigned char length);
 // byte to receve
 extern int UART0_pending(void);
-// copy bytes into buffer, return number of bytes read
-extern unsigned char UART0_read(unsigned char *buffer, unsigned char length);
+// read a single byte
+extern unsigned char UART0_read_byte();
 
 #endif // __UART0_H
