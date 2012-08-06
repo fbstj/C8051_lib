@@ -23,17 +23,24 @@ extern void CAN_frame_copy(CAN_frame_t *const from, CAN_frame_t *const to);
 
 #ifdef CAN0_PAGE	// only defined if the processor has a C_CAN device
 
+#define CAN0_MO_COUNT	32	// number of avaliable message objects
+
 // initialise CAN0
 extern void CAN0_init(void);
 
-// latest frame to be received on CAN0
-extern CAN_frame_t *CAN0_latest;
+// disable message object and clear all registers
+extern void CAN0_clear(char mo);
+// configrue messge object to transmit frames with ID passed
+extern void CAN0_tx(char mo, long ID);
+// configure message object to receive frames with ID passed
+extern void CAN0_rx(char mo, long ID);
+// transmit message object with data passed
+extern void CAN0_send(char mo, unsigned char Data[8], unsigned char Length);
+// retreive frame from message object (0 returned if no message received)
+extern CAN_frame_t *CAN0_get(char mo);
 
-// send a message object
-extern void CAN0_send(CAN_frame_t *const frame);
-
-// receive frames without using the interrupt
-extern CAN_frame_t *CAN0_poll(void);
+// TODO: support extended and remote frames
+// TODO: use CAN_frame_t more
 
 #endif	// CAN0_PAGE
 

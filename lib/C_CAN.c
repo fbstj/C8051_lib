@@ -25,13 +25,9 @@ int i = 0;
 	to->Length = from->Length;
 	for(i = 0; i < 8; i++)
 		to->Data[i] = from->Data[i];
-	to->Remote = from->Remote;
-	to->Extended = from->Extended;
+	to->Remote = from->Remote & 1;
+	to->Extended = from->Extended  & 1;
 }
-
-// state
-static CAN_frame_t CAN0_RX;
-CAN_frame_t *CAN0_latest;
 
 #ifdef CAN0_PAGE
 // CAN0STAT masks
@@ -42,144 +38,210 @@ CAN_frame_t *CAN0_latest;
 #define TxOk	0x08		// Transmitted Message Successfully
 #define LEC		0x07		// Last Error Code
 
+enum E_MO_COMMAND_FLAGS {
+	MaskRegs = 0x40,
+	ArbitrationRegs = 0x20,
+	ControlRegs = 0x10,
+	ClearInterrupt = 0x08,
+	Transmit = 0x04,
+	ClearNewData = 0x04,
+	DataA = 0x02, DataB = 0x01, DataRegs = 0x03,
+	WRITE = 0x80, READ = 0x00
+};
+enum E_MO_CONTROL_FLAGS {
+	NewData = 0x8000,
+	MessageLost = 0x4000,
+	InterruptPending = 0x2000,
+	UseMask = 0x1000,
+	TransmitInterruptEnable = 0x0800,
+	ReceiveInterruptEnable = 0x0400,
+	RemoteEnable = 0x0200,	// auto reply to remote frames
+	Transmitting = 0x0100,
+	EoB = 0x0080
+};
+enum E_MO_MASK_ARBITRATION_FLAGS {
+	EXTENDED_ID = 0x1FFFFFFF,
+	STANDARD_ID = 0x000007FF,
+	MessageValid = 0x8000,
+	Extended = 0x4000,
+	DirectionFlag = 0x2000,
+	MaskExtended = 0x8000,
+	MaskDirection = 0x4000
+};
+
+unsigned char FRAME_RX[CAN0_MO_COUNT];
+
+#define MO_norm(mo)	(mo % CAN0_MO_COUNT)
+#define IF1_MO(mo)	CAN0IF1CR = MO_norm(mo);	while (CAN0IF1CRH & 0x80)
+#define IF2_MO(mo)	CAN0IF2CR = MO_norm(mo);	while (CAN0IF2CRH & 0x80)
+
 void CAN0_init(void)
 {
+char i;
 unsigned char SFRPAGE_save = SFRPAGE;
 	SFRPAGE = CAN0_PAGE;
-	CAN0CN = 1;						// start Intialization mode
-	CAN_nop();						// wait
-	// initialize general CAN peripheral settings
-	CAN0CN |= 0x4E;					// enable Error, Module and access to bit timing register
-	CAN_nop();						// wait
+	CAN0CN = 1;
+
+	CAN0CN |= 0x4E;
 /*	CAN0BT bit timing register
 	@ 24 MHz CAN_CLK, 80% sample point
 http://www.port.de/pages/misc/bittimings.php?lang=en
 http://www.port.de/cgi-bin/tq.cgi?ctype=C_CAN&CLK=24&sample_point=80
-	BAUD	CAN0BT
-	1 MHz	0x1402
-	500 kHz	0x2B02
-	250 kHz	0x2B05
-	100 kHz	0x2B0E
+	BAUD	1 MHz	500kHz	250kHz	100kHz
+	CAN0BT	1402	2B02	2B05	2B0E
 */
-	CAN0BT = 0x1402;	// 1 MHz
-//	CAN0BT = 0x2B02;	// 500 kHz
-//	CAN0BT = 0x2B05;	// 250 kHz
-//	CAN0BT = 0x2B0E;	// 100 kHz
-	CAN0CN |= 0x80;					// enable test mode
-	CAN_nop();						// wait
-	CAN0TST = 0x04;					// enalbe basic mode
-	// CAN initalization is complete
-	CAN0CN &= ~0x41;				// return to Normal Mode and disable access to bit timing register
+	CAN0BT = 0x1402;
+	CAN0CN &= ~0x41;
 
 	SFRPAGE = SFRPAGE_save;
 
-	CAN_frame_clear(&CAN0_RX);
-	CAN0_latest = 0;
+	for (i = 0; i < CAN0_MO_COUNT; i++)
+	{
+		CAN0_clear(i);
+	}
 }
 
-void CAN0_send(CAN_frame_t *const m)
+void CAN0_clear(char mo)
 {
 unsigned char SFRPAGE_save = SFRPAGE;
-unsigned short _A2, _A1;			// temporary arbitration regs
-
 	SFRPAGE = CAN0_PAGE;
 
-	CAN_frame_norm_len(m);
-	// message control register
-	CAN0IF1MC = 0x1480 | m->Length;
-
-	// command request and mask registers
-	CAN0IF1CR = 0x0000;
-	CAN0IF1CM = 0x00F3;
-
-	// arbitration registers
-	if (m->Extended == 1)
-	{	// extended frame
-		m->ID &= 0x1FFFFFFF;
-		_A1 = m->ID;			// lower half of id
-		_A2 = (m->ID >> 16);	// upper half of id
-		_A2 |= 0x4000;		// set extended flag
-	}
-	else
-	{	// standard frame
-		m->ID &= 0x000007FF;
-		_A1 = 0;
-		_A2 = (m->ID << 2);	// id fits in bits 28-18
-	}
-
-	if (m->Remote == 1)
-		_A2 &= ~0x2000;		// a remote frame
-	else
-		_A2 |= 0x2000;		// not a remote frame
-
-	CAN0IF1A1 = _A1;
-	CAN0IF1A2 = _A2;
-
-	// data registers
-	CAN0IF1DA1L = m->Data[0];
-	CAN0IF1DA1H = m->Data[1];
-	CAN0IF1DA2L = m->Data[2];
-	CAN0IF1DA2H = m->Data[3];
-	CAN0IF1DB1L = m->Data[4];
-	CAN0IF1DB1H = m->Data[5];
-	CAN0IF1DB2L = m->Data[6];
-	CAN0IF1DB2H = m->Data[7];
-
-	// send message
-	CAN0IF1CM = 0x0087;				// set Direction to Write TxRqst
-	CAN0IF1CR = 0x8000;				// start command request
-	CAN_nop();
-	while (CAN0IF1CRH & 0x80) { }	// poll on Busy bit
+	// clear flags
+	CAN0IF1CM = READ | ClearInterrupt | ClearNewData;
+	IF1_MO(mo);
+	// clear registers
+	CAN0IF1A1 = CAN0IF1A2 = 0x0000;
+	CAN0IF1M1 = CAN0IF1M2 = 0x0000;
+	CAN0IF1MC = EoB;
+	CAN0IF1DA1L = CAN0IF1DA1H = CAN0IF1DA2L = CAN0IF1DA2H = 0;
+	CAN0IF1DB1L = CAN0IF1DB1H = CAN0IF1DB2L = CAN0IF1DB2H = 0;
+	// write the arbitration and control registers
+	CAN0IF1CM = WRITE | ControlRegs | ArbitrationRegs | MaskRegs | DataRegs;
+	IF1_MO(mo);
+	// clear receive counter
+	FRAME_RX[MO_norm(mo)] = 0;
 
 	SFRPAGE = SFRPAGE_save;
 }
 
-INTERRUPT(CAN0_ISR, INTERRUPT_CAN0)
-{	// SFRPAGE is set to CAN0_Page automatically when ISR starts
-unsigned char status;
-long _arb;
-CAN_frame_t *m = &CAN0_RX;
-//unsigned char Interrupt_ID;
+void CAN0_tx(char mo, long ID)
+{
+unsigned char SFRPAGE_save = SFRPAGE;
+	SFRPAGE = CAN0_PAGE;
 
-	status = CAN0STAT;				// read status, which clears the Status Interrupt bit pending in CAN0IID
+	// set the arbitration registers
+	CAN0IF1A1 = 0x0000;
+	CAN0IF1A2 = MessageValid | DirectionFlag | (ID << 2);
+	// last message in buffer
+	CAN0IF1MC = EoB;
+	// write the arbitration and control registers
+	CAN0IF1CM = WRITE | ArbitrationRegs | ControlRegs;
+	IF1_MO(mo);
 
-	CAN0IF2CM = 0x007F;				// read all of message object to IF2 Clear IntPnd and newData
-	CAN_nop();
-	while (CAN0IF2CRH & 0x80) {}	// poll on Busy bit
+	SFRPAGE = SFRPAGE_save;
+}
+
+void CAN0_send(char mo, unsigned char Data[8], unsigned char Length)
+{
+unsigned char SFRPAGE_save = SFRPAGE;
+	SFRPAGE = CAN0_PAGE;
+
+	// read CAN0IF1MC for the flags
+	CAN0IF1CM = READ | ControlRegs;
+	IF1_MO(mo);
+	// update data registers
+	CAN0IF1DA1L = Data[0]; CAN0IF1DA1H = Data[1];
+	CAN0IF1DA2L = Data[2]; CAN0IF1DA2H = Data[3];
+	CAN0IF1DB1L = Data[4]; CAN0IF1DB1H = Data[5];
+	CAN0IF1DB2L = Data[6]; CAN0IF1DB2H = Data[7];
+	// update DLC in control register
+	CAN0IF1MC = (CAN0IF1MC & 0xFFF0) | ((Length > 8) ? 8 : Length);
+	// write the data and control registers and trigger a transmit
+	CAN0IF1CM = WRITE | Transmit | DataRegs | ControlRegs;
+	IF1_MO(mo);
+
+	SFRPAGE = SFRPAGE_save;
+}
+
+void CAN0_rx(char mo, long ID)
+{
+unsigned char SFRPAGE_save = SFRPAGE;
+	SFRPAGE = CAN0_PAGE;
+
+	// set mask registers to mask for the correct bits
+	CAN0IF1M1 = 0x0000;
+	CAN0IF1M2 = MaskDirection | (STANDARD_ID << 2);
+	// set arbitration registers to match the passed ID
+	CAN0IF1A1 = 0x0000;
+	CAN0IF1A2 = MessageValid | (ID << 2);
+	// use mask registers and enable interrupts
+	CAN0IF1MC = UseMask | ReceiveInterruptEnable | EoB;
+	// write the arbitration, mask and control registers
+	CAN0IF1CM = WRITE | ArbitrationRegs | MaskRegs | ControlRegs;
+	IF1_MO(mo);
+
+	SFRPAGE = SFRPAGE_save;
+}
+
+INTERRUPT (CAN0_ISR, INTERRUPT_CAN0)
+{
+char status, mo;
+	status = CAN0STAT;
+	mo = CAN0IID;
+
+	CAN0IF1CM = READ | ClearInterrupt | ClearNewData;
+	IF1_MO(mo);
 
 	if (status & RxOk)
 	{	// receive completed successfully
-		_arb = CAN0IF2A2;
-		_arb = _arb << 16;
-		_arb |= CAN0IF2A1;
-
-		m->Extended = (_arb >> 30) & 1;
-
-		m->Remote = (_arb >> 29) & 1;
-
-		if(m->Extended == 1)
-			m->ID = (_arb & 0x1FFFFFFF);
-		else
-			m->ID = ((_arb >> 18) & 0x07FF);
-
-		// retreive the number of bytes in the packet (upto 8)
-		m->Length = CAN0IF2MCL;
-		CAN_frame_norm_len(m);
-
-		// copy message into CAN0rx;
-		m->Data[0] = CAN0IF2DA1L;
-		m->Data[1] = CAN0IF2DA1H;
-		m->Data[2] = CAN0IF2DA2L;
-		m->Data[3] = CAN0IF2DA2H;
-		m->Data[4] = CAN0IF2DB1L;
-		m->Data[5] = CAN0IF2DB1H;
-		m->Data[6] = CAN0IF2DB2L;
-		m->Data[7] = CAN0IF2DB2H;
-
-		CAN0_latest = &CAN0_RX;
+		FRAME_RX[MO_norm(mo)]++;
 	}
 }
 
+CAN_frame_t *CAN0_get(char mo)
+{
+static long _arb;
+static CAN_frame_t f;
+unsigned char SFRPAGE_save = SFRPAGE;
+	SFRPAGE = CAN0_PAGE;
+
+	if (FRAME_RX[MO_norm(mo)] == 0)
+		return 0;
+
+	CAN0IF1CM = READ | ControlRegs | ArbitrationRegs | DataRegs;
+	IF1_MO(mo);
+
+	_arb = CAN0IF1A2;
+	_arb = _arb << 16;
+	_arb |= CAN0IF1A1;
+
+	f.Extended = (_arb >> 30) & 1;
+
+	f.Remote = (_arb >> 29) & 1;
+
+	if(f.Extended == 1)
+		f.ID = (_arb & 0x1FFFFFFF);
+	else
+		f.ID = ((_arb >> 18) & 0x07FF);
+
+	// retreive the number of bytes in the packet (upto 8)
+	f.Length = CAN0IF1MCL & 0x0F;
+	if (f.Length > 8)
+		f.Length = 8;
+
+	// copy message into CAN0rx;
+	f.Data[0] = CAN0IF1DA1L; f.Data[1] = CAN0IF1DA1H;
+	f.Data[2] = CAN0IF1DA2L; f.Data[3] = CAN0IF1DA2H;
+	f.Data[4] = CAN0IF1DB1L; f.Data[5] = CAN0IF1DB1H;
+	f.Data[6] = CAN0IF1DB2L; f.Data[7] = CAN0IF1DB2H;
+
+	SFRPAGE = SFRPAGE_save;
+
+	FRAME_RX[MO_norm(mo)] = 0;
+
+	return &f;
+}
+
 #else	// CAN0_PAGE
-#error	CAN0 not defined (check myPlatform includes the correct target definitions)
+#error	CAN0 not defined (check platfomr.h includes the correct target definitions)
 #endif	// CAN0_PAGE
