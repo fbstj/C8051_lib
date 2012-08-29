@@ -10,6 +10,4 @@
 
 extern Init_Device();			// the Config Wizard entry point
 
-#define ISR(name)	INTERRUPT(name##_ISR, INTERRUPT_##name)
-
 #endif	// __PLATFORM_H
