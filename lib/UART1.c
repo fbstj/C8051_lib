@@ -8,10 +8,14 @@
 
 static UART_state_t UART1_state;
 
+#ifdef UART1_9bit
+extern bit UART1_RX_9bit;
+#endif
+
 void UART1_init(unsigned long baud)
 {
 unsigned char SFR_save = SFRPAGE;
-unsigned long _ = SYSCLK / baud / 4;
+#define _	(SYSCLK / baud / 4)
 	SFRPAGE = ACTIVE2_PAGE;
 	SCON1 = 0x90;	// 9-bit variable bit rate, no STOP, RX enabled, clear RI1 and TI1
 	SFRPAGE = ACTIVE_PAGE;
@@ -42,14 +46,15 @@ unsigned long _ = SYSCLK / baud / 4;
 	TMOD |= 0x20;
 	TR1 = 1;		// START Timer1
 	EIE2 |= 0x08;	// Enable UART1 interrupts
+#ifdef UART1_9bit
+	TB81 = 0;	// 9th bit is unset
+#endif
 	SFRPAGE = SFR_save;
 	memset(&UART1_state, 0, sizeof(UART_state_t));
 	UART1_state.TX_idle = 1;
 #ifdef UART1_RS485
 	UART1_DIR = 0;	// set tranceiver in recieve mode
-#endif
-#ifdef UART1_9bit
-	UART1_9bit = 0;	// 9th bit is unset
+	UART1_RX_9bit = 0;
 #endif
 }
 
@@ -62,7 +67,7 @@ INTERRUPT(UART1_ISR, INTERRUPT_UART1)
 		if (RB81 == 1)
 		{	// first byte of frame
 			UART1_state.Received = UART1_state.Read;
-			UART1_9bit = 1;
+			UART1_RX_9bit = 1;
 		}
 #endif
 		UART1_state.RX[UART1_state.Received++] = SBUF1;
@@ -99,12 +104,12 @@ unsigned char SFR_save = SFRPAGE;
 #ifdef UART1_RS485
 		UART1_DIR = 1;	// set the tranciever to transmit mode
 #endif
-#ifdef UART1_9bit
-		TB81 = 1;	// set the 9th bit for the first byte
-#endif
 		UART1_state.TX_idle = 0;
 		SFR_save = SFRPAGE;
 		SFRPAGE = ACTIVE2_PAGE;
+#ifdef UART1_9bit
+		TB81 = 1;	// set the 9th bit for the first byte
+#endif
 		SBUF1 = UART1_state.TX[UART1_state.Sent++];
 		SFRPAGE = SFR_save;
 	}
