@@ -11,7 +11,7 @@ static UART_state_t UART0_state;
 void UART0_init(unsigned long BAUDRATE)
 {
 unsigned char SFR_save = SFRPAGE;
-unsigned long _ = SYSCLK / BAUDRATE / 4;
+#define _	(SYSCLK / BAUDRATE / 4)
 	SFRPAGE = CONFIG_PAGE;
 
 	if ((_ / 0xFFFF) < 1)
