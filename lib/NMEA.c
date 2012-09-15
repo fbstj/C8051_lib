@@ -18,12 +18,6 @@ unsigned char i;
 	return msg->Checksum;
 }
 
-void NMEA_void(NMEA_msg_t *const msg)
-{
-	memset(msg, 0, sizeof(NMEA_msg_t));
-	msg->State = e_NMEA_INVALID;
-}
-
 unsigned char NMEA_argc(NMEA_msg_t *const msg)
 {
 unsigned char i;
@@ -85,7 +79,7 @@ unsigned char i = 0, j = 0;
 
 char NMEA_parse_byte(NMEA_msg_t *const msg, const unsigned char byte)
 {
-static char STARS, STAR[2];
+static char STARS, STAR[3];
 	if (byte == e_NMEA_DOLLAR)
 	{
 		msg->Length = 0;
@@ -108,23 +102,12 @@ static char STARS, STAR[2];
 		STAR[STARS++] = byte;
 		if(STARS < 2)
 			return msg->State;
+		STAR[2] = 0;
 		if(NMEA_checksum(msg) != strtoul(STAR, NULL, 16))
 			return msg->State == e_NMEA_INVALID;
 		NMEA_argc(msg);
 		msg->State = e_NMEA_VALID;
 		break;
 	}
-}
-
-char NMEA_parse_string(NMEA_msg_t *const msg, const char *const str)
-{
-unsigned char i = 0, l = strlen(str);
-	for(i = 0; i < l; i++)
-	{
-		NMEA_parse_byte(msg, str[i]);
-		if(msg->State == e_NMEA_VALID)
-			return i + 1;
-	}
-	return 0;
 }
 

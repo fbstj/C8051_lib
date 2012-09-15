@@ -25,9 +25,6 @@ typedef struct NMEA_MESSAGE_T {
 // parse a byte into msg
 extern char NMEA_parse_byte(NMEA_msg_t *const msg, const unsigned char byte);
 
-// parse a string into a mmsg
-extern char NMEA_parse_string(NMEA_msg_t *const msg, const char *const str);
-
 // start constructing a msg
 extern char NMEA_start(NMEA_msg_t *const msg, const char *const command);
 
@@ -39,6 +36,7 @@ extern char NMEA_finish(NMEA_msg_t *const msg, char *const out);
 
 // return the calculated checksum of msg (a bytewise XOR between $ and *, starting at 0xFF)
 extern unsigned char NMEA_checksum(NMEA_msg_t *const msg);
+
 // return the calculated number of arguments in msg
 extern unsigned char NMEA_argc(NMEA_msg_t *const msg);
 
@@ -56,6 +54,8 @@ extern unsigned long NMEA_get_number(NMEA_msg_t *const msg, const unsigned char 
 extern char NMEA_add_number(NMEA_msg_t *const msg, const unsigned long number, unsigned char *const format);
 // asserts the equality of the index'th argument in msg and the passed string
 extern char NMEA_arg_equal(NMEA_msg_t *const msg, const unsigned long index, unsigned char *const string);
+// parse a string into a mmsg
+extern char NMEA_parse_string(NMEA_msg_t *const msg, const char *const str);
 
 // -- end of file
 

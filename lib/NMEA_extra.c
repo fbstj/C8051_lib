@@ -26,3 +26,21 @@ char NMEA_arg_equal(NMEA_msg_t *const msg, const unsigned long index, unsigned c
 	NMEA_get(msg, index, buf);
 	return strcmp(buf,string) == 0;
 }
+
+char NMEA_parse_string(NMEA_msg_t *const msg, const char *const str)
+{
+unsigned char i = 0, l = strlen(str);
+	for(i = 0; i < l; i++)
+	{
+		NMEA_parse_byte(msg, str[i]);
+		if(msg->State == e_NMEA_VALID)
+			return i + 1;
+	}
+	return 0;
+}
+
+void NMEA_void(NMEA_msg_t *const msg)
+{
+	memset(msg, 0, sizeof(NMEA_msg_t));
+	msg->State = e_NMEA_INVALID;
+}
