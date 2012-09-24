@@ -41,6 +41,8 @@ extern void CAN0_send(CAN_frame_t *const frame);
 #else	// CAN0_BASIC
 /* driver for onboard peripheral CAN0 utilising message objects, see CAN0.c */
 
+#define CAN0_MO_COUNT	32
+
 // disable message object and clear all registers
 extern void CAN0_clear(char mo);
 // configrue messge object to transmit frames with ID passed
