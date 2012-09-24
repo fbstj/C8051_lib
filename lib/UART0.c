@@ -2,7 +2,6 @@
 	A low level driver for UART0 on C8051F580
 */
 #include "platform.h"
-#include <string.h>
 #include "UART.h"
 #include "UART0.h"
 
@@ -47,40 +46,41 @@ unsigned char SFR_save = SFRPAGE;
 
 	SFRPAGE = SFR_save;
 
-	memset(&UART0_state, 0, sizeof(struct T_UART_STATE));
-	UART0_state.TX_idle = 1;
+	UART_state_init(UART0_state);
 }
 
 INTERRUPT(UART0_ISR, INTERRUPT_UART0)
 {
-	if (RI0)
+	if (RI0 == 1)
 	{
 		RI0 = 0;
-		UART0_state.RX[UART0_state.Received++] = SBUF0;
+		UART_receive(UART0_state) = SBUF0;
 	}
-	if (TI0)
+	if (TI0 == 1)
 	{
 		TI0 = 0;
 		if (UART0_state.Written == UART0_state.Sent)
 			UART0_state.TX_idle = 1;
 		else
-			SBUF0 = UART0_state.TX[UART0_state.Sent++];
+			SBUF0 = UART_transmit(UART0_state);
 	}
+}
+
+void UART0_tx(UART0_state_t *const p)
+{	// trigger TX interrupt if not already sending
+	if (!p->TX_idle == 1)
+		return;
+	p->TX_idle = 0;
+	SBUF0 = pUART_transmit(p);
 }
 
 void UART0_write(unsigned char * buffer, unsigned char length)
 {
 	while (length--)
-		UART0_state.TX[UART0_state.Written++] = *buffer++;
-
-	// trigger TX interrupt if not already doing
-	if (UART0_state.TX_idle)
-	{
-		UART0_state.TX_idle = 0;
-		SBUF0 = UART0_state.TX[UART0_state.Sent++];
-	}
+		UART_write(UART0_state) = *buffer++;
+	UART0_tx(&UART0_state);
 }
 
-int UART0_pending(void) { return (int)UART0_state.Received - (int)UART0_state.Read; }
+int UART0_pending(void) { return UART_rx_pending(UART0_state); }
 
-unsigned char UART0_read_byte(void) { return UART0_state.RX[UART0_state.Read++]; }
+unsigned char UART0_read_byte(void) { return UART_read(UART0_state); }
