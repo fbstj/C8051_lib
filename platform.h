@@ -10,4 +10,8 @@
 
 extern Init_Device();			// the Config Wizard entry point
 
+enum E_SPI0_DEVICES {
+	e_SPI0_none = 0
+};
+
 #endif	// __PLATFORM_H
