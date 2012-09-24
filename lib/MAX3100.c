@@ -1,6 +1,7 @@
 /*
 	MAX3100 SPI UART driver (for inbuilt peripheral SPI0)
 */
+#include "platform.h"
 #include "UART.h"
 #include "SPI0.h"
 #include "MAX3100.h"
@@ -76,6 +77,6 @@ void MAX3100_send(const SPI0_device device, UART_state_t *const state)
 			NOP();
 			device = 0;
 		}
-		MAX3100_word(SEND | pUART_send(state));
+		MAX3100_word(SEND | pUART_transmit(state));
 	}
 }
