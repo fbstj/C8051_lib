@@ -1,8 +1,8 @@
 /*
-	A driver for the CAN bus on C8051F580s
+	A CAN frame structure
 */
-#ifndef __C_CAN_H
-#define __C_CAN_H
+#ifndef __CAN_H
+#define __CAN_H
 
 typedef struct T_CAN_FRAME {
 	long ID;				// the message identifier
@@ -18,15 +18,28 @@ extern void CAN_frame_clear(CAN_frame_t *const frame);
 // copy data between frames
 extern void CAN_frame_copy(CAN_frame_t *const from, CAN_frame_t *const to);
 
+// normalise frame ID
+#define CAN_frmame_norm_ID(f)	(f->ID & (f->Extended != 0)? 0x1FFFFFFF : 0x7FF)
+
 // normalise frame DLC
-#define CAN_frame_norm_len(f)	{ if(f->Length > 8)	f->Length = 8; }
+#define CAN_frame_norm_len(f)	{ if (f->Length > 8)	f->Length = 8; }
 
-#ifdef CAN0_PAGE	// only defined if the processor has a C_CAN device
-
-#define CAN0_MO_COUNT	32	// number of avaliable message objects
+#ifdef CAN0_PAGE
 
 // initialise CAN0
 extern void CAN0_init(void);
+
+#ifdef CAN0_BASIC
+/* basic driver for onboard peripheral CAN0, see CAN0_basic.c */
+
+// latest frame to be received on CAN0
+extern CAN_frame_t *CAN0_latest;
+
+// send a message object
+extern void CAN0_send(CAN_frame_t *const frame);
+
+#else	// CAN0_BASIC
+/* driver for onboard peripheral CAN0 utilising message objects, see CAN0.c */
 
 // disable message object and clear all registers
 extern void CAN0_clear(char mo);
@@ -42,6 +55,7 @@ extern CAN_frame_t *CAN0_get(char mo);
 // TODO: support extended and remote frames
 // TODO: use CAN_frame_t more
 
+#endif	// CAN0_BASIC
 #endif	// CAN0_PAGE
 
-#endif // __C_CAN_H
+#endif // __CAN_H

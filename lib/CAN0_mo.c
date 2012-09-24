@@ -1,8 +1,8 @@
 /*
-	A driver for the CAN bus on C8051F580s
+	A driver for the CAN bus on C8051F580s which utilises message objects
 */
 #include "platform.h"
-#include "C_CAN.h"
+#include "CAN_bus.h"
 
 // breaks between write-read pairs
 #define CAN_nop()	NOP();NOP();NOP();NOP()
