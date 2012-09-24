@@ -66,7 +66,7 @@ INTERRUPT(UART0_ISR, INTERRUPT_UART0)
 	}
 }
 
-void UART0_tx(UART0_state_t *const p)
+void UART0_tx(UART_state_t *const p)
 {	// trigger TX interrupt if not already sending
 	if (!p->TX_idle == 1)
 		return;
