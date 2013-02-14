@@ -1,0 +1,13 @@
+# SiLabs IDE
+*.obj
+*.lst
+*.M51
+*.out
+*.omf
+cyglink.txt
+cleanup.bat
+out/
+*.#*
+*.tmp
+*.hex
+new/
