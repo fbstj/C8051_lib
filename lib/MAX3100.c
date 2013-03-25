@@ -2,8 +2,6 @@
 	MAX3100 SPI UART driver (for inbuilt peripheral SPI0)
 */
 #include "platform.h"
-#include "UART.h"
-#include "SPI0.h"
 #include "MAX3100.h"
 
 enum E_MAX3100 {
@@ -37,8 +35,7 @@ char MAX3100_baud(const long baud)
 #undef GET_BAUD_SETTING
 }
 
-static SPI0_device _MAX3100;
-
+/* example word function for SPI0
 unsigned int MAX3100_word(unsigned int out)
 {
 unsigned int in;
@@ -48,35 +45,30 @@ unsigned int in;
 	SPI0_select(0);
 	return in;
 }
+*/
 
-void MAX3100_init(const SPI0_device device, const enum E_MAX3100_CONFIGURATION conf, const long baud)
+void MAX3100_init(struct MAX3100 * const device, const enum E_MAX3100_CONFIGURATION conf, const long baud)
 {
-	_MAX3100 = device;
-	MAX3100_word(CONFIGURE | (conf & ~(CONFIGURE | BAUD)) | MAX3100_baud(baud));
+	device->word(CONFIGURE | (conf & ~(CONFIGURE | BAUD)) | MAX3100_baud(baud));
+	RING_clear(&device->rx);
+	RING_clear(&device->tx);
 }
 
-#define MAX3100_RX_PEND ((MAX3100_word(CONFIGURATION) & RX_PENDING) != 0)
-#define MAX3100_TX_PEND ((MAX3100_word(CONFIGURATION) & TX_PENDING) == 0)
+#define MAX3100_RX_PEND ((device->word(CONFIGURATION) & RX_PENDING) != 0)
+#define MAX3100_TX_PEND ((device->word(CONFIGURATION) & TX_PENDING) == 0)
 
-void MAX3100_isr(const SPI0_device device, UART_state_t *const state)
+void MAX3100_send(struct MAX3100 * const device)
 {
-	_MAX3100 = device;
-	while (MAX3100_RX_PEND)
-		pUART_receive(state) = MAX3100_word(READ);
-}
-
-void MAX3100_send(const SPI0_device device, UART_state_t *const state)
-{
-	_MAX3100 = device;
-	while (pUART_tx_pending(state))
+	while (MAX3100_RX_PEND)	// read pending
+		RING_put(&device->RX) = device->word(READ);
+	while (device->TX.tail != device->TX.head)
 	{	// for all sendable bytes
-		while (MAX3100_RX_PEND)
-			pUART_receive(state) = MAX3100_word(READ);
-		while (MAX3100_TX_PEND)
-		{
+		while (MAX3100_RX_PEND)	// read pending
+			RING_put(&device->RX) = device->word(READ);
+		while (MAX3100_TX_PEND) // write pending
 			NOP();
-			device = 0;
-		}
-		MAX3100_word(SEND | pUART_transmit(state));
+		device->word(SEND | RING_get(&device->TX));
 	}
+	while (MAX3100_RX_PEND)	// read pending
+		RING_put(&device->RX) = device->word(READ);
 }

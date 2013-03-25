@@ -3,6 +3,7 @@
 */
 #ifndef __MAX3100_H
 #define __MAX3100_H
+#include "buffers.h"
 
 /* configuration variables for MAX3100 chips
 e_MAX3100_FEN		FIFO enable(d)
@@ -22,13 +23,29 @@ enum E_MAX3100_CONFIGURATION {
 	e_MAX3100_IrDA = 0x0080, e_MAX3100_ST = 0x0040, e_MAX3100_PE = 0x0020, e_MAX3100_WL = 0x0010
 };
 
-// initialises the MAX3100 chip with the configuration
-extern void MAX3100_init(const SPI0_device device, const enum E_MAX3100_CONFIGURATION conf, const long baud);
+struct MAX3100 {
+	// exchange a word with the device (including chip selection)
+	unsigned int (*word)(unsigned int);
+	// data buffers
+	struct byte_buffer rx, tx;
+};
 
-// receive all pending characters on device into state
-extern void MAX3100_isr(const SPI0_device device, UART_state_t *const state);
-// send all pending characters in state to device for sending
-// - also receives any characters between transfers
-extern void MAX3100_send(const SPI0_device device, UART_state_t *const state);
+// initialises the MAX3100 chip with the configuration
+extern void MAX3100_init(struct MAX3100 * const, const enum E_MAX3100_CONFIGURATION, const long baud);
+
+// service the device (blocking)
+// - write all tx buffer to the chip
+// - fill rx with any pending data
+extern void MAX3100_isr(struct MAX3100 * const);
+
+// add a string to be sent next time ISR gets called
+extern void MAX3100_puts(struct MAX3100 * const, char *, int);
+
+// check for characters
+#define MAX3100_pending(self)	RING_count(&self->rx)
+
+// read a string out of the buffer
+#define MAX3100_getc(self)		RING_get(&self->rx)
+
 
 #endif	// __MAX3100_H
