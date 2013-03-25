@@ -2,17 +2,18 @@
 	A low level driver for UART0 on C8051F580
 */
 #include "platform.h"
-#include "UART.h"
-#include "UART0.h"
+#include "buffers.h"
+#include "UARTs.h"
 
-static UART_state_t UART0_state;
+static struct byte_ring TX0, RX0;
+static volatile char TX0_idle, RX0_idle;
 
-void UART0_init(unsigned long BAUDRATE)
+void U0_init(unsigned long baud)
 {
 unsigned char SFR_save = SFRPAGE;
-#define _	(SYSCLK / BAUDRATE / 4)
-	SFRPAGE = CONFIG_PAGE;
+#define _	(SYSCLK / baud / 4)
 
+	SFRPAGE = CONFIG_PAGE;
 	if ((_ / 0xFFFF) < 1)
 	{	// prescaler 1
 		SBRL0 = -_;
@@ -35,52 +36,52 @@ unsigned char SFR_save = SFRPAGE;
 		SBCON0 &= ~0x03;
 		SBCON0 |= 0x02;
 	}
-
-	SBCON0 |= 0x40;		// Enable baud rate generator
-
+	SBCON0 |= 0x40;	// Enable baud rate generator
 	SFRPAGE = ACTIVE_PAGE;
-
 	SCON0 = 0x10;	// SCON0: 8-bit variable bit rate clear RI0 and TI0 bits
-
 	TI0 = 1;		// Indicate TX0 ready
-
 	SFRPAGE = SFR_save;
 
-	UART_state_init(UART0_state);
+	IE |= 0x10;		// enable UART0 interrupts
+
+	RING_clear(&TX0);
+	RING_clear(&RX0);
+	TX0_idle = RX0_idle = 1;
 }
 
-INTERRUPT(UART0_ISR, INTERRUPT_UART0)
+INTERRUPT(U0_ISR, INTERRUPT_UART0)
 {
 	if (RI0 == 1)
 	{
 		RI0 = 0;
-		UART_receive(UART0_state) = SBUF0;
+		RING_put(&RX0) = SBUF0;
 	}
 	if (TI0 == 1)
 	{
 		TI0 = 0;
-		if (UART0_state.Written == UART0_state.Sent)
-			UART0_state.TX_idle = 1;
+		if (TX0.head == TX0.tail)
+			TX0_idle = 1;
 		else
-			SBUF0 = UART_transmit(UART0_state);
+			SBUF0 = RING_get(&TX0);
 	}
 }
 
-void UART0_tx(UART_state_t *const p)
-{	// trigger TX interrupt if not already sending
-	if (!p->TX_idle == 1)
-		return;
-	p->TX_idle = 0;
-	SBUF0 = pUART_transmit(p);
-}
-
-void UART0_write(unsigned char * buffer, unsigned char length)
+int U0_puts(char * buffer, int length)
 {
-	while (length--)
-		UART_write(UART0_state) = *buffer++;
-	UART0_tx(&UART0_state);
+int i;
+
+	for (i = 0; i < length; i++)
+		RING_put(&TX0) = buffer[i];
+
+	if (TX0_idle == 0)
+		return i;
+	TX0_idle = 0;
+
+	SBUF0 = RING_get(&TX0);
+
+	return i;
 }
 
-int UART0_pending(void) { return UART_rx_pending(UART0_state); }
+int U0_pending() { return RING_count(&RX0); }
 
-unsigned char UART0_read_byte(void) { return UART_read(UART0_state); }
+unsigned char U0_getc() { return RING_get(&RX0); }

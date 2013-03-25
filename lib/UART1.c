@@ -2,21 +2,19 @@
 	A low level driver for 9-bit UART1 on C8051F580
 */
 #include "platform.h"
-#include "UART.h"
-#include "UART1.h"
+#include "buffers.h"
+#include "UARTs.h"
 
-static UART_state_t STATE;
+static struct byte_ring TX1, RX1;
+static volatile char TX1_idle, RX1_idle;
 
-#ifdef UART1_9bit
-extern bit UART1_RX_9bit;
-#endif
-
-void UART1_init(unsigned long baud)
+void U1_init(unsigned long baud)
 {
 unsigned char SFR_save = SFRPAGE;
-#define _	(SYSCLK / baud / 4)
+#define _	(SYSCLK / baud / 2)
+
 	SFRPAGE = ACTIVE2_PAGE;
-	SCON1 = 0x90;	// 9-bit variable bit rate, no STOP, RX enabled, clear RI1 and TI1
+	SCON1 = 0x10;	// 8-bit variable bit rate, no STOP, RX enabled, clear RI1 and TI1
 	SFRPAGE = ACTIVE_PAGE;
 	if (_/256 < 1)
 	{	// prescaler 1
@@ -40,83 +38,57 @@ unsigned char SFR_save = SFRPAGE;
 		CKCON &= ~0x0B;
 		CKCON |=  0x02;
 	}
-	TL1 = TH1;		// Init Timer1
-	TMOD &= ~0xF0;	// TMOD: timer 1 in 8-bit autoreload
+	TL1 = TH1;		// Init T1
+	TMOD &= ~0xF0;	// TMOD: T1 in 8-bit autoreload
 	TMOD |= 0x20;
-	TR1 = 1;		// START Timer1
-	EIE2 |= 0x08;	// Enable UART1 interrupts
-#ifdef UART1_9bit
-	TB81 = 0;		// 9th bit is unset
-#endif
+	TR1 = 1;		// START T1
+
+	EIE2 |= 0x08;	// Enable U1 interrupts
+
 	SFRPAGE = SFR_save;
-#ifdef UART1_RS485
-	UART1_DIR = 0;	// set tranceiver in recieve mode
-#endif
-#ifdef UART1_9bit
-	UART1_RX_9bit = 0;
-#endif
-	UART_state_init(STATE);
+
+	RING_clear(&TX1);
+	RING_clear(&RX1);
+	TX1_idle = RX1_idle = 1;
 }
 
-INTERRUPT(UART1_ISR, INTERRUPT_UART1)
+INTERRUPT(U1_ISR, INTERRUPT_UART1)
 {
 	if (RI1 == 1)
 	{
 		RI1 = 0;
-#ifdef UART1_9bit
-		if (RB81 == 1)
-		{	// first byte of frame
-			STATE.Received = STATE.Read;
-			UART1_RX_9bit = 1;
-		}
-#endif
-		UART_receive(STATE) = SBUF1;
+		RING_put(&RX1) = SBUF1;
 	}
 	if (TI1 == 1)
 	{
 		TI1 = 0;
-#ifdef UART1_9bit
-		TB81 = 0;	// clear the 9th bit for all subsequent bytes
-#endif
-		if (STATE.Written == STATE.Sent)
-		{	// end of transmit message
-			STATE.TX_idle = 1;
-#ifdef UART1_RS485
-			UART1_DIR = 0;	// return tranceiverto recieve mode
-#endif
-		}
+		if (TX1.head == TX1.tail)
+			TX1_idle = 1;
 		else
-		{
-			SBUF1 = UART_transmit(STATE);
-		}
+			SBUF1 = RING_get(&TX1);
 	}
 }
 
-void UART1_tx(UART_state_t *const p)
-{	// trigger TX interrupt if not already sending
-unsigned char SFR_save = SFRPAGE;
-	if (!p->TX_idle == 1)
-		return;
-#ifdef UART1_RS485
-	UART1_DIR = 1;	// set the tranciever to transmit mode
-#endif
-	p->TX_idle = 0;
+int U1_puts(char * buffer, int length)
+{
+char SFR_save;
+int i;
+
+	for (i = 0; i < length; i++)
+		RING_put(&TX1) = buffer[i];
+
+	if (TX1_idle == 0)
+		return i;
+	TX1_idle = 0;
+
 	SFR_save = SFRPAGE;
 	SFRPAGE = ACTIVE2_PAGE;
-#ifdef UART1_9bit
-	TB81 = 1;	// set the 9th bit for the first byte
-#endif
-	SBUF1 = pUART_transmit(p);
+	SBUF1 = RING_get(&TX1);
 	SFRPAGE = SFR_save;
+
+	return i;
 }
 
-void UART1_write(unsigned char *buffer, unsigned char length)
-{
-	while (length--)
-		UART_write(STATE) = *buffer++;
-	UART1_tx(&STATE);
-}
+int U1_pending() { return RING_count(&RX1); }
 
-int UART1_pending(void) { return UART_rx_pending(STATE); }
-
-unsigned char UART1_read_byte(void) { return UART_read(STATE); }
+unsigned char U1_getc() { return RING_get(&RX1); }
