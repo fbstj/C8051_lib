@@ -2,7 +2,6 @@
 	A driver for M95256-WMN6P SPI EEPROM
 */
 #include "platform.h"
-#include "SPI0.h"
 #include "M95256.h"
 
 enum M95256_INSTRUCTIONS {
@@ -14,45 +13,45 @@ enum M95256_INSTRUCTIONS {
 	e_M95256_READ = 0x03, e_M95256_WRITE = 0x02
 };
 
-void M95256_read(const SPI0_device device, short address, unsigned char *const buffer, unsigned char length)
+void M95256_load( const struct M95256 * const self, const unsigned int address, unsigned char * const buffer, const unsigned char length)
 {
 unsigned char i;
 	length %= M95256_PAGE_SIZE;
-	SPI0_select(device);
-	SPI0_byte(e_M95256_READ);
-	SPI0_byte(address >> 8);
-	SPI0_byte(address);
+	self->select();
+	self->byte(e_M95256_READ);
+	self->byte(address >> 8);
+	self->byte(address);
 	for (i = 0; i < length; i++)
 	{
-		buffer[i] = SPI0_byte(0);
+		buffer[i] = self->byte(0);
 	}
-	SPI0_select(0);
+	self->deselect();
 }
 
-void M95256_write(const SPI0_device device, short address, unsigned char *const buffer, unsigned char length)
+void M95256_save(const struct M95256 * const self, const unsigned int address, const unsigned char * const buffer, unsigned char length)
 {
 unsigned char i;
 	length %= M95256_PAGE_SIZE;
-	SPI0_select(device);
-	SPI0_byte(e_M95256_WREN);
-	SPI0_select(0);
+	self->select();
+	self->byte(e_M95256_WREN);
+	self->deselect();
 	i = 1; while (i++) NOP();
-	SPI0_select(device);
-	SPI0_byte(e_M95256_WRITE);
-	SPI0_byte(address >> 8);
-	SPI0_byte(address);
+	self->select();
+	self->byte(e_M95256_WRITE);
+	self->byte(address >> 8);
+	self->byte(address);
 	for (i = 0; i < length; i++)
 	{
-		SPI0_byte(buffer[i]);
+		self->byte(buffer[i]);
 	}
-	SPI0_select(0);
+	self->deselect();
 	i = 1; while (i++) NOP();
-	SPI0_select(device);
-	SPI0_byte(e_M95256_WRDI);
-	SPI0_select(0);
+	self->select();
+	self->byte(e_M95256_WRDI);
+	self->deselect();
 	i = 1; while (i++) NOP();
-	SPI0_select(device);
-	SPI0_byte(e_M95256_RDSR);
-	while (SPI0_byte(0) & 3) ;
-	SPI0_select(0);
+	self->select();
+	self->byte(e_M95256_RDSR);
+	while (self->byte(0) & 3) ;
+	self->deselect();
 }
