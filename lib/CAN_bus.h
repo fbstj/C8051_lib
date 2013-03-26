@@ -4,60 +4,72 @@
 #ifndef __CAN_H
 #define __CAN_H
 
-typedef struct T_CAN_FRAME {
+struct CAN_frame {
 	long ID;				// the message identifier
 	unsigned char Data[8];	// the 8 bytes of the packet
 	char Length;			// the number of bytes in the packet (DLC field)
 	char Extended;			// the frame type (1: 29bit, 0: 11bit)
 	char Remote;			// remote frame
-} CAN_frame_t;
+};
+
+enum CAN_baud {
+	CAN_1Mbps,
+	CAN_800kbps,
+	CAN_500kbps,
+	CAN_250kbps,
+	CAN_125kbps,
+	CAN_100kbps
+};
 
 // initialises a frame
-extern void CAN_frame_clear(CAN_frame_t *const frame);
+extern void CAN_frame_clear(struct CAN_frame * const);
 
 // copy data between frames
-extern void CAN_frame_copy(CAN_frame_t *const from, CAN_frame_t *const to);
+// -- copy(from, to)
+extern void CAN_frame_copy(const struct CAN_frame *const, struct CAN_frame *const);
 
 // normalise frame ID
-#define CAN_frmame_norm_ID(f)	(f->ID & (f->Extended != 0)? 0x1FFFFFFF : 0x7FF)
+#define CAN_frame_norm_ID(f)	(f->ID & ((f->Extended == 1) ? 0x1FFFFFFF : 0x7FF))
 
 // normalise frame DLC
-#define CAN_frame_norm_len(f)	{ if (f->Length > 8)	f->Length = 8; }
+#define CAN_frame_norm_len(f)	((f->Length > 8) ? 8 : f->Length)
 
 #ifdef CAN0_PAGE
 
 // initialise CAN0
-extern void CAN0_init(void);
+extern void CAN0_init(const enum CAN_baud);
 
-#ifdef CAN0_BASIC
-/* basic driver for onboard peripheral CAN0, see CAN0_basic.c */
+#ifndef CAN0_MO
+/* CAN0_basic.c */
 
 // latest frame to be received on CAN0
-extern CAN_frame_t *CAN0_latest;
+extern char CAN0_latest(struct CAN_frame * const);
+
+// send a frame and wait for a response
+// -- poll(frame to send/fill, timeout)
+extern char CAN0_poll(struct CAN_frame * const, long);
 
 // send a message object
-extern void CAN0_send(CAN_frame_t *const frame);
+extern void CAN0_send(const struct CAN_frame * const);
 
-#else	// CAN0_BASIC
-/* driver for onboard peripheral CAN0 utilising message objects, see CAN0.c */
+#else	// CAN0_MO
+/* CAN0_mo.c */
 
 #define CAN0_MO_COUNT	32
 
 // disable message object and clear all registers
-extern void CAN0_clear(char mo);
+extern void CAN0_clear(const char mo);
 // configrue messge object to transmit frames with ID passed
-extern void CAN0_tx(char mo, long ID);
+extern void CAN0_tx(const char mo, const long ID);
 // configure message object to receive frames with ID passed
-extern void CAN0_rx(char mo, long ID);
+extern void CAN0_rx(const char mo, const long ID);
 // transmit message object with data passed
-extern void CAN0_send(char mo, unsigned char Data[8], unsigned char Length);
+extern void CAN0_send(const char mo, const unsigned char Data[8], const unsigned char Length);
 // retreive frame from message object (0 returned if no message received)
-extern CAN_frame_t *CAN0_get(char mo);
+extern struct CAN_frame * CAN0_get(const char mo);
 
-// TODO: support extended and remote frames
-// TODO: use CAN_frame_t more
+#endif	// CAN0_MO
 
-#endif	// CAN0_BASIC
 #endif	// CAN0_PAGE
 
 #endif // __CAN_H

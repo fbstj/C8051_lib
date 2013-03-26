@@ -7,7 +7,7 @@
 // breaks between write-read pairs
 #define CAN_nop()	NOP();NOP();NOP();NOP()
 
-void CAN_frame_clear(CAN_frame_t *const frame)
+void CAN_frame_clear(struct CAN_frame * const frame)
 {
 int i = 0;
 	frame->ID = 0x7FF;			// lowest priority message ID
@@ -18,7 +18,7 @@ int i = 0;
 	frame->Extended = 0;		//	not an extended frame
 }
 
-void CAN_frame_copy(CAN_frame_t *const from, CAN_frame_t *const to)
+void CAN_frame_copy(const struct CAN_frame * const from, struct CAN_frame * const to)
 {
 int i = 0;
 	to->ID = from->ID;
@@ -75,7 +75,7 @@ unsigned char FRAME_RX[CAN0_MO_COUNT];
 #define IF1_MO(mo)	CAN0IF1CR = MO_norm(mo);	while (CAN0IF1CRH & 0x80)
 #define IF2_MO(mo)	CAN0IF2CR = MO_norm(mo);	while (CAN0IF2CRH & 0x80)
 
-void CAN0_init(void)
+void CAN0_init(const enum CAN_baud baud)
 {
 char i;
 unsigned char SFRPAGE_save = SFRPAGE;
@@ -83,14 +83,23 @@ unsigned char SFRPAGE_save = SFRPAGE;
 	CAN0CN = 1;
 
 	CAN0CN |= 0x4E;
+
 /*	CAN0BT bit timing register
 	@ 24 MHz CAN_CLK, 80% sample point
 http://www.port.de/pages/misc/bittimings.php?lang=en
 http://www.port.de/cgi-bin/tq.cgi?ctype=C_CAN&CLK=24&sample_point=80
-	BAUD	1 MHz	500kHz	250kHz	100kHz
-	CAN0BT	1402	2B02	2B05	2B0E
+	BAUD	1MHz	500kHz	250kHz	100kHz
+	CAN0BT	0x1402	0x2B02	0x2B05	0x2B0E
 */
-	CAN0BT = 0x1402;
+	switch (baud)
+	{
+	case CAN_1Mbps:		CAN0BT = 0x1402;
+	case CAN_500kbps:	CAN0BT = 0x2B02;
+	case CAN_250kbps:	CAN0BT = 0x2B05;
+	case CAN_125kbps:	CAN0BT = 0x2B0B;
+	case CAN_100kbps:	CAN0BT = 0x2B0E;
+	}
+
 	CAN0CN &= ~0x41;
 
 	SFRPAGE = SFRPAGE_save;
@@ -198,10 +207,10 @@ char status, mo;
 	}
 }
 
-CAN_frame_t *CAN0_get(char mo)
+struct CAN_frame * CAN0_get(char mo)
 {
 static long _arb;
-static CAN_frame_t f;
+static struct CAN_frame f;
 unsigned char SFRPAGE_save = SFRPAGE;
 	SFRPAGE = CAN0_PAGE;
 
