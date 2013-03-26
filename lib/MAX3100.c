@@ -50,8 +50,8 @@ unsigned int in;
 void MAX3100_init(struct MAX3100 * const device, const enum E_MAX3100_CONFIGURATION conf, const long baud)
 {
 	device->word(CONFIGURE | (conf & ~(CONFIGURE | BAUD)) | MAX3100_baud(baud));
-	RING_clear(&device->rx);
-	RING_clear(&device->tx);
+	RING_clear(&device->RX);
+	RING_clear(&device->TX);
 }
 
 #define MAX3100_RX_PEND ((device->word(CONFIGURATION) & RX_PENDING) != 0)

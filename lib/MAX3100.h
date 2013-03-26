@@ -27,7 +27,7 @@ struct MAX3100 {
 	// exchange a word with the device (including chip selection)
 	unsigned int (*word)(unsigned int);
 	// data buffers
-	struct byte_buffer rx, tx;
+	struct byte_ring RX, TX;
 };
 
 // initialises the MAX3100 chip with the configuration
@@ -42,10 +42,10 @@ extern void MAX3100_isr(struct MAX3100 * const);
 extern void MAX3100_puts(struct MAX3100 * const, char *, int);
 
 // check for characters
-#define MAX3100_pending(self)	RING_count(&self->rx)
+#define MAX3100_pending(self)	RING_count(&self->RX)
 
 // read a string out of the buffer
-#define MAX3100_getc(self)		RING_get(&self->rx)
+#define MAX3100_getc(self)		RING_get(&self->RX)
 
 
 #endif	// __MAX3100_H
