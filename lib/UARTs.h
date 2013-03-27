@@ -1,8 +1,8 @@
 /*
 	onboard UARTs
 */
-#ifndef __UART_H
-#define __UART_H
+#ifndef __UARTS_H
+#define __UARTS_H
 
 /*
 	UART0 controls
@@ -26,4 +26,4 @@ extern int U1_pending();
 // read a byte
 extern unsigned char U1_getc();
 
-#endif	// __UART_H
+#endif	// __UARTS_H
