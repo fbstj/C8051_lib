@@ -5,57 +5,66 @@
 /* 	--- constants and types --- */
 #define NMEA_BUF_LEN	256
 
-enum E_NMEA_STATES {
-	e_NMEA_DOLLAR = '$',
-	e_NMEA_STAR = '*',
-	e_NMEA_DELIMIT = ',',
-	e_NMEA_INVALID = 0,
-	e_NMEA_VALID = 1
+enum NMEA_state {
+	NMEA_dollar = '$',
+	NMEA_star = '*',
+	NMEA_delimit = ',',
+	NMEA_invalid = 0,
+	NMEA_valid = 1
 };
 
-typedef struct NMEA_MESSAGE_T {
-	unsigned char String[NMEA_BUF_LEN];
-	unsigned char Length;		// nunber of characters in String
-	unsigned char Arguments;	// number of arguments in String
-	unsigned char Checksum;		// current CRC of String
-	enum E_NMEA_STATES State;	// current state of parsing
-} NMEA_msg_t;
+struct NMEA_msg {
+	unsigned char raw[NMEA_BUF_LEN];
+	unsigned char length;	// nunber of characters in String
+	unsigned char argc;		// number of arguments in String
+	unsigned char check;	// current CRC of String
+	enum NMEA_state state;	// current state of parsing
+};
 
 /* 	--- functions --- */
 // parse a byte into msg
-extern char NMEA_parse_byte(NMEA_msg_t *const msg, const unsigned char byte);
+extern enum NMEA_state NMEA_parse_byte(struct NMEA_msg * const, const char);
 
 // start constructing a msg
-extern char NMEA_start(NMEA_msg_t *const msg, const char *const command);
+extern char NMEA_start(struct NMEA_msg * const, const char * const);
 
 // add an argument to msg
-extern char NMEA_add(NMEA_msg_t *const msg, const char *const arg);
+extern char NMEA_add(struct NMEA_msg * const, const char * const);
 
 // copy and complete msg into out
-extern char NMEA_finish(NMEA_msg_t *const msg, char *const out);
+extern char NMEA_finish(struct NMEA_msg * const, char * const out);
 
 // return the calculated checksum of msg (a bytewise XOR between $ and *, starting at 0xFF)
-extern unsigned char NMEA_checksum(NMEA_msg_t *const msg);
+extern unsigned char NMEA_checksum(struct NMEA_msg * const);
 
 // return the calculated number of arguments in msg
-extern unsigned char NMEA_argc(NMEA_msg_t *const msg);
+// argc(msg)
+extern int NMEA_argc(struct NMEA_msg * const);
 
 // copy the index'th argument from str into buf, return the length of the argument
-extern unsigned char NMEA_get(NMEA_msg_t *const msg, unsigned char index, char *const buf);
+// get(msg, index, buffer)
+extern int NMEA_get(struct NMEA_msg * const, const int, char * const);
 // retreive the command string from msg into buf
 #define NMEA_command(msg, buf)		NMEA_get(msg, 0, buf)
 
 // -- EXTRA (NMEA_extra.c)
 // clear the passed message
-extern void NMEA_void(NMEA_msg_t *const msg);
+extern void NMEA_clear(struct NMEA_msg * const);
+
 // return the numeric value of the index'th argument in msg, converting it using the specified base
-extern unsigned long NMEA_get_number(NMEA_msg_t *const msg, const unsigned char index, const unsigned char base);
+// - get(msg, index, base)
+extern long NMEA_get_number(struct NMEA_msg * const, const int, const int);
+
 // add the passed number using the passed string format
-extern char NMEA_add_number(NMEA_msg_t *const msg, const unsigned long number, unsigned char *const format);
+// - add(msg, number, format)
+extern char NMEA_add_number(struct NMEA_msg * const, const long, char * const);
+
 // asserts the equality of the index'th argument in msg and the passed string
-extern char NMEA_arg_equal(NMEA_msg_t *const msg, const unsigned long index, unsigned char *const string);
+// - equal(msg, index, cmp)
+extern char NMEA_arg_equal(struct NMEA_msg * const, const int, char * const);
+
 // parse a string into a mmsg
-extern char NMEA_parse_string(NMEA_msg_t *const msg, const char *const str);
+extern char NMEA_parse_string(struct NMEA_msg * const, const char * const);
 
 // -- end of file
 

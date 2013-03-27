@@ -9,38 +9,38 @@
 
 unsigned char buf[20];
 
-unsigned long NMEA_get_number(NMEA_msg_t *const msg, const unsigned char index, const unsigned char base)
+long NMEA_get_number(struct NMEA_msg * const msg, const int index, const int base)
 {
 	NMEA_get(msg, index, buf);
 	return strtoul(buf, NULL, base);
 }
 
-char NMEA_add_number(NMEA_msg_t *const msg, const unsigned long number, unsigned char *const format)
+char NMEA_add_number(struct NMEA_msg * const msg, const long number, char * const format)
 {
 	sprintf(buf, format, number);
 	return NMEA_add(msg, buf);
 }
 
-char NMEA_arg_equal(NMEA_msg_t *const msg, const unsigned long index, unsigned char *const string)
+char NMEA_arg_equal(struct NMEA_msg * const msg, const int index, char * const string)
 {
 	NMEA_get(msg, index, buf);
 	return strcmp(buf,string) == 0;
 }
 
-char NMEA_parse_string(NMEA_msg_t *const msg, const char *const str)
+char NMEA_parse_string(struct NMEA_msg * const msg, const char *const str)
 {
 unsigned char i = 0, l = strlen(str);
 	for(i = 0; i < l; i++)
 	{
 		NMEA_parse_byte(msg, str[i]);
-		if(msg->State == e_NMEA_VALID)
+		if(msg->state == NMEA_valid)
 			return i + 1;
 	}
 	return 0;
 }
 
-void NMEA_void(NMEA_msg_t *const msg)
+void NMEA_clear(struct NMEA_msg * const msg)
 {
-	memset(msg, 0, sizeof(NMEA_msg_t));
-	msg->State = e_NMEA_INVALID;
+	memset(msg, 0, sizeof(struct NMEA_msg));
+	msg->state = NMEA_invalid;
 }
