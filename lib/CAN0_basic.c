@@ -2,7 +2,7 @@
 	A basic-mode driver for the CAN bus on C8051F580s
 */
 #include "platform.h"
-#include "CAN_bus.h"
+#include "CAN0.h"
 
 // breaks between write-read pairs
 #define CAN_nop()	NOP();NOP();NOP();NOP()

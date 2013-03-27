@@ -2,7 +2,7 @@
 	A driver for the CAN bus on C8051F580s which utilises message objects
 */
 #include "platform.h"
-#include "CAN_bus.h"
+#include "CAN0.h"
 
 // breaks between write-read pairs
 #define CAN_nop()	NOP();NOP();NOP();NOP()
@@ -150,7 +150,7 @@ unsigned char SFRPAGE_save = SFRPAGE;
 	SFRPAGE = SFRPAGE_save;
 }
 
-void CAN0_send(char mo, unsigned char Data[8], unsigned char Length)
+void CAN0_send(const char mo, const unsigned char Data[8], const unsigned char Length)
 {
 unsigned char SFRPAGE_save = SFRPAGE;
 	SFRPAGE = CAN0_PAGE;
