@@ -1,6 +1,8 @@
 /*
 	A library for building pseudo-NMEA packets
 */
+#ifndef __NMEA_H
+#define __NMEA_H
 
 /* 	--- constants and types --- */
 #define NMEA_BUF_LEN	256
@@ -66,5 +68,4 @@ extern char NMEA_arg_equal(struct NMEA_msg * const, const int, char * const);
 // parse a string into a mmsg
 extern char NMEA_parse_string(struct NMEA_msg * const, const char * const);
 
-// -- end of file
-
+#endif	// __NMEA_H
