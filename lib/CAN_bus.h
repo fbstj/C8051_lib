@@ -29,9 +29,9 @@ extern void CAN_frame_clear(struct CAN_frame * const);
 extern void CAN_frame_copy(const struct CAN_frame *const, struct CAN_frame *const);
 
 // normalise frame ID
-#define CAN_frame_norm_ID(f)	(f->ID & ((f->Extended == 1) ? 0x1FFFFFFF : 0x7FF))
+#define CAN_frame_norm_ID(f)	((f)->ID & (((f)->Extended == 1) ? 0x1FFFFFFF : 0x7FF))
 
 // normalise frame DLC
-#define CAN_frame_norm_len(f)	((f->Length > 8) ? 8 : f->Length)
+#define CAN_frame_norm_len(f)	(((f)->Length > 8) ? 8 : (f)->Length)
 
 #endif // __CAN_H
