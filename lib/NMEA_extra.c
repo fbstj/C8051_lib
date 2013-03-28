@@ -7,7 +7,7 @@
 #include <stdio.h>		// sprintf
 #include <stdlib.h>		// strtoul
 
-unsigned char buf[100];
+static unsigned char buf[100];
 
 long NMEA_get_number(struct NMEA_msg * const msg, const int index, const int base)
 {
