@@ -11,7 +11,7 @@ static volatile char TX0_idle, RX0_idle;
 void U0_init(unsigned long baud)
 {
 unsigned char SFR_save = SFRPAGE;
-#define _	(SYSCLK / baud / 4)
+#define _	(SYSCLK / baud / 2)
 
 	SFRPAGE = CONFIG_PAGE;
 	if ((_ / 0xFFFF) < 1)
