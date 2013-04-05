@@ -67,13 +67,7 @@ void Port_IO_Init()
 
 void Oscillator_Init()
 {
-    int i = 0;
     SFRPAGE   = CONFIG_PAGE;
-    CLKMUL    = 0x80;
-    for (i = 0; i < 20; i++);    // Wait 5us for clock multiplier initialization
-    CLKMUL    |= 0xC0;
-    while ((CLKMUL & 0x20) == 0);
-    CLKSEL    = 0x02;
     OSCICN    = 0xC7;
     SFRPAGE   = ACTIVE_PAGE;
 }

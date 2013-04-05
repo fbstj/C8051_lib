@@ -6,7 +6,7 @@
 #include "compiler_defs.h"		// compiler independant definitions
 #include "C8051F580_defs.h"		// target dependant definitions
 
-#define SYSCLK	48000000		// SYSCLK is 48MHz
+#define SYSCLK	24000000		// SYSCLK is 24MHz
 
 extern Init_Device();			// the Config Wizard entry point
 
