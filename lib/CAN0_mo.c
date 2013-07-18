@@ -2,6 +2,7 @@
 	A driver for the CAN bus on C8051F580s which utilises message objects
 */
 #include "platform.h"
+#ifdef CAN0_MO
 #include "CAN0.h"
 
 // breaks between write-read pairs
@@ -254,3 +255,4 @@ unsigned char SFRPAGE_save = SFRPAGE;
 #else	// CAN0_PAGE
 #error	CAN0 not defined (check platfomr.h includes the correct target definitions)
 #endif	// CAN0_PAGE
+#endif	// CAN0_MO
