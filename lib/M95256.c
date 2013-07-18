@@ -5,11 +5,11 @@
 
 enum M95256_INSTRUCTIONS {
 	// write enable/disable
-	e_M95256_WREN = 0x06, e_M95256_WRDI = 0x04,
+	WREN = 0x06, WRDI = 0x04,
 	// read/write status register
-	e_M95256_RDSR = 0x05, e_M95256_WRSR = 0x01,
+	RDSR = 0x05, WRSR = 0x01,
 	// read/write memory
-	e_M95256_READ = 0x03, e_M95256_WRITE = 0x02
+	READ = 0x03, WRITE = 0x02
 };
 
 #define SELECT(action) self->select(); action; self->deselect()
@@ -21,7 +21,7 @@ unsigned char i;
 	length %= M95256_PAGE_SIZE;
 
 	SELECT(
-		self->byte(e_M95256_READ);
+		self->byte(READ);
 		self->byte(address >> 8);
 		self->byte(address);
 		for (i = 0; i < length; i++)
@@ -39,13 +39,13 @@ extern void sleep(volatile unsigned long);
 	length %= M95256_PAGE_SIZE;
 
 	SELECT(
-		self->byte(e_M95256_WREN)
+		self->byte(WREN)
 	);
 
 	sleep(256);
 
 	SELECT(
-		self->byte(e_M95256_WRITE);
+		self->byte(WRITE);
 		self->byte(address >> 8);
 		self->byte(address);
 		for (i = 0; i < length; i++)
@@ -57,13 +57,13 @@ extern void sleep(volatile unsigned long);
 	sleep(256);
 
 	SELECT(
-		self->byte(e_M95256_WRDI)
+		self->byte(WRDI)
 	);
 
 	sleep(256);
 
 	SELECT(
-		self->byte(e_M95256_RDSR);
+		self->byte(RDSR);
 		while (self->byte(0) & 3) ;
 	);
 }
