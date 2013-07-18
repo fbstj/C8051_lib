@@ -54,7 +54,7 @@ INTERRUPT(U0_ISR, INTERRUPT_UART0)
 	if (RI0 == 1)
 	{
 		RI0 = 0;
-		RING_put(&RX0) = SBUF0;
+		RX0.buffer[RX0.head++] = SBUF0;
 	}
 	if (TI0 == 1)
 	{
@@ -62,7 +62,7 @@ INTERRUPT(U0_ISR, INTERRUPT_UART0)
 		if (TX0.head == TX0.tail)
 			TX0_idle = 1;
 		else
-			SBUF0 = RING_get(&TX0);
+			SBUF0 = TX0.buffer[TX0.tail++];
 	}
 }
 
@@ -71,17 +71,17 @@ int U0_puts(char * buffer, int length)
 int i;
 
 	for (i = 0; i < length; i++)
-		RING_put(&TX0) = buffer[i];
+		TX0.buffer[TX0.head++] = buffer[i];
 
 	if (TX0_idle == 0)
 		return i;
 	TX0_idle = 0;
 
-	SBUF0 = RING_get(&TX0);
+	SBUF0 = TX0.buffer[TX0.tail++];
 
 	return i;
 }
 
-int U0_pending() { return RING_count(&RX0); }
+int U0_pending() { return ring_count(256, RX0.head, RX0.tail); }
 
-unsigned char U0_getc() { return RING_get(&RX0); }
+unsigned char U0_getc() { return RX0.buffer[RX0.tail++]; }

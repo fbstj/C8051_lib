@@ -57,7 +57,7 @@ INTERRUPT(U1_ISR, INTERRUPT_UART1)
 	if (RI1 == 1)
 	{
 		RI1 = 0;
-		RING_put(&RX1) = SBUF1;
+		RX1.buffer[RX1.head++] = SBUF1;
 	}
 	if (TI1 == 1)
 	{
@@ -65,7 +65,7 @@ INTERRUPT(U1_ISR, INTERRUPT_UART1)
 		if (TX1.head == TX1.tail)
 			TX1_idle = 1;
 		else
-			SBUF1 = RING_get(&TX1);
+			SBUF1 = TX1.buffer[TX1.tail++];
 	}
 }
 
@@ -75,7 +75,7 @@ char SFR_save;
 int i;
 
 	for (i = 0; i < length; i++)
-		RING_put(&TX1) = buffer[i];
+		TX1.buffer[TX1.head++] = buffer[i];
 
 	if (TX1_idle == 0)
 		return i;
@@ -83,12 +83,12 @@ int i;
 
 	SFR_save = SFRPAGE;
 	SFRPAGE = ACTIVE2_PAGE;
-	SBUF1 = RING_get(&TX1);
+	SBUF1 = TX1.buffer[TX1.tail++];
 	SFRPAGE = SFR_save;
 
 	return i;
 }
 
-int U1_pending() { return RING_count(&RX1); }
+int U1_pending() { return ring_count(256, RX1.head, RX1.tail); }
 
-unsigned char U1_getc() { return RING_get(&RX1); }
+unsigned char U1_getc() { return RX1.buffer[RX1.tail++]; }
