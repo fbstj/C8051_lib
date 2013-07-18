@@ -81,17 +81,11 @@ enum NMEA_state NMEA_parse_byte(struct NMEA_msg * const msg, const unsigned char
 {
 static char STARS, STAR[3];
 	if (byte == NMEA_dollar)
-	{
-		msg->length = 0;
-		return msg->state = byte;
-	}
+		return (msg->length = 0), msg->state = byte;
 	if (!isprint(byte))
 		return msg->state = NMEA_invalid;
 	if (byte == NMEA_star)
-	{
-		STARS = 0;
-		return msg->state = byte;
-	}
+		return (STARS = 0), msg->state = byte;
 	switch (msg->state)
 	{
 	case NMEA_dollar:
