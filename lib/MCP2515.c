@@ -5,23 +5,25 @@
 #include "MCP2515.h"
 #include "MCP2515_regs.h"
 
+#define SELECT(action) self->select(); action; self->deselect()
+
 static unsigned char SPI_get(const struct MCP2515 * const self, unsigned char addr)
 {
-	self->select();
-	self->byte(CAN_READ);
-	self->byte(addr);
-	addr = self->byte(0);
-	self->byte(0);
-	self->deselect();
+	SELECT(
+		self->byte(CAN_READ);
+		self->byte(addr);
+		addr = self->byte(0);
+		self->byte(0);
+	);
 	return addr;
 }
 static void SPI_set(const struct MCP2515 * const self, unsigned char const addr, unsigned char const value )
 {
-	self->select();
-	self->byte(CAN_WRITE);
-	self->byte(addr);
-	self->byte(value);
-	self->deselect(self);
+	SELECT(
+		self->byte(CAN_WRITE);
+		self->byte(addr);
+		self->byte(value);
+	);
 }
 
 void MCP2515_send(const struct MCP2515 * const self, const struct CAN_frame * const frame)
@@ -60,9 +62,7 @@ unsigned char TXB0CTRLval, cRet;
 	SPI_set(self, TXB0CTRL, TXREQ_SET | TXP_INTER_HIGH);
 
 	//Initiate send
-	self->select();
-	self->byte(CAN_RTS_TXB0);
-	self->deselect();
+	SELECT(self->byte(CAN_RTS_TXB0));
 }
 char MCP2515_latest(const struct MCP2515 * const self, struct CAN_frame * const frame)
 {
