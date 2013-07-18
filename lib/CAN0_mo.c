@@ -94,11 +94,11 @@ http://www.port.de/cgi-bin/tq.cgi?ctype=C_CAN&CLK=24&sample_point=80
 */
 	switch (baud)
 	{
-	case CAN_1Mbps:		CAN0BT = 0x1402;
-	case CAN_500kbps:	CAN0BT = 0x2B02;
-	case CAN_250kbps:	CAN0BT = 0x2B05;
-	case CAN_125kbps:	CAN0BT = 0x2B0B;
-	case CAN_100kbps:	CAN0BT = 0x2B0E;
+	case CAN_1Mbps:		CAN0BT = 0x1402;	break;
+	case CAN_500kbps:	CAN0BT = 0x2B02;	break;
+	case CAN_250kbps:	CAN0BT = 0x2B05;	break;
+	case CAN_125kbps:	CAN0BT = 0x2B0B;	break;
+	case CAN_100kbps:	CAN0BT = 0x2B0E;	break;
 	}
 
 	CAN0CN &= ~0x41;
