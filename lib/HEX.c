@@ -1,7 +1,7 @@
 /*
 	Hexadecimal string parsing/writing functions
 */
-#include "utils.h"
+#include "HEX.h"
 #include <string.h>		// strcat, memcpy
 #include <stdio.h>		// sprintf
 #include <stdlib.h>		// strtoul
