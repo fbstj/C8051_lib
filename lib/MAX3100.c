@@ -47,28 +47,31 @@ unsigned int in;
 }
 */
 
-void MAX3100_init(struct MAX3100 * const device, const enum E_MAX3100_CONFIGURATION conf, const long baud)
+void MAX3100_init(struct MAX3100 * const self, const enum E_MAX3100_CONFIGURATION conf, const long baud)
 {
-	device->word(CONFIGURE | (conf & ~(CONFIGURE | BAUD)) | MAX3100_baud(baud));
-	RING_clear(&device->RX);
-	RING_clear(&device->TX);
+	self->word(CONFIGURE | (conf & ~(CONFIGURE | BAUD)) | MAX3100_baud(baud));
+	RING_clear(&self->RX);
+	RING_clear(&self->TX);
 }
 
-#define MAX3100_RX_PEND ((device->word(CONFIGURATION) & RX_PENDING) != 0)
-#define MAX3100_TX_PEND ((device->word(CONFIGURATION) & TX_PENDING) == 0)
+#define MAX3100_RX_PEND ((self->word(CONFIGURATION) & RX_PENDING) != 0)
+#define MAX3100_TX_PEND ((self->word(CONFIGURATION) & TX_PENDING) == 0)
 
-void MAX3100_send(struct MAX3100 * const device)
+void MAX3100_irq(struct MAX3100 * const self)
 {
 	while (MAX3100_RX_PEND)	// read pending
-		RING_put(&device->RX) = device->word(READ);
-	while (device->TX.tail != device->TX.head)
+		self->RX.buffer[self->RX.head++] = self->word(READ);
+}
+
+void MAX3100_send(struct MAX3100 * const self)
+{
+	MAX3100_irq(self);
+	while (self->TX.tail != self->TX.head)
 	{	// for all sendable bytes
-		while (MAX3100_RX_PEND)	// read pending
-			RING_put(&device->RX) = device->word(READ);
-		while (MAX3100_TX_PEND) // write pending
-			NOP();
-		device->word(SEND | RING_get(&device->TX));
+		MAX3100_irq(self);
+		if (MAX3100_TX_PEND) 	// write pending
+			continue;
+		self->word(SEND | self->TX.buffer[self->TX.tail++]);
 	}
-	while (MAX3100_RX_PEND)	// read pending
-		RING_put(&device->RX) = device->word(READ);
+	MAX3100_irq(self);
 }
