@@ -5,7 +5,7 @@
 #include "buffers.h"
 #include "UARTs.h"
 
-static struct byte_ring TX0, RX0;
+static struct UART_MEM TX0, RX0;
 static volatile char TX0_idle, RX0_idle;
 
 void U0_init(unsigned long baud)
@@ -44,8 +44,8 @@ unsigned char SFR_save = SFRPAGE;
 
 	IE |= 0x10;		// enable UART0 interrupts
 
-	RING_clear(&TX0);
-	RING_clear(&RX0);
+	UART_clear(&TX0);
+	UART_clear(&RX0);
 	TX0_idle = RX0_idle = 1;
 }
 
@@ -82,6 +82,6 @@ int i;
 	return i;
 }
 
-int U0_pending() { return ring_count(256, RX0.head, RX0.tail); }
+int U0_pending() { return UART_size(256, RX0.head, RX0.tail); }
 
 unsigned char U0_getc() { return RX0.buffer[RX0.tail++]; }

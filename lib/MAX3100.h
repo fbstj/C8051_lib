@@ -3,7 +3,7 @@
 */
 #ifndef __MAX3100_H
 #define __MAX3100_H
-#include "buffers.h"
+#include "UARTs.h"
 
 /* configuration variables for MAX3100 chips
 e_MAX3100_FEN		FIFO enable(d)
@@ -27,7 +27,7 @@ struct MAX3100 {
 	// exchange a word with the device (including chip selection)
 	unsigned int (*word)(unsigned int);
 	// data buffers
-	struct byte_ring RX, TX;
+	struct UART_MEM RX, TX;
 };
 
 // initialises the MAX3100 chip with the configuration

@@ -2,10 +2,9 @@
 	A low level driver for 9-bit UART1 on C8051F580
 */
 #include "platform.h"
-#include "buffers.h"
 #include "UARTs.h"
 
-static struct byte_ring TX1, RX1;
+static struct UART_MEM TX1, RX1;
 static volatile char TX1_idle, RX1_idle;
 
 void U1_init(unsigned long baud)
@@ -47,8 +46,8 @@ unsigned char SFR_save = SFRPAGE;
 
 	SFRPAGE = SFR_save;
 
-	RING_clear(&TX1);
-	RING_clear(&RX1);
+	UART_clear(&TX1);
+	UART_clear(&RX1);
 	TX1_idle = RX1_idle = 1;
 }
 
@@ -89,6 +88,6 @@ int i;
 	return i;
 }
 
-int U1_pending() { return ring_count(256, RX1.head, RX1.tail); }
+int U1_pending() { return UART_size(256, RX1.head, RX1.tail); }
 
 unsigned char U1_getc() { return RX1.buffer[RX1.tail++]; }
