@@ -84,7 +84,7 @@ http://www.port.de/cgi-bin/tq.cgi?ctype=C_CAN&CLK=24&sample_point=80
 	received = 0;
 }
 
-void CAN0_send(const struct CAN_frame * const f)
+int CAN0_send(const struct CAN_frame * const f)
 {
 unsigned char SFR_save = SFRPAGE;
 unsigned short _A2, _A1;			// temporary arbitration regs
@@ -140,6 +140,8 @@ unsigned short _A2, _A1;			// temporary arbitration regs
 	SFRPAGE = SFR_save;
 
 	received = 0;
+
+	return 1;
 }
 
 INTERRUPT(CAN0_ISR, INTERRUPT_CAN0)
@@ -186,7 +188,7 @@ long _arb;
 	}
 }
 
-char CAN0_latest(struct CAN_frame * const f)
+int CAN0_latest(struct CAN_frame * const f)
 {
 	if (received == 0)
 		return 0;
@@ -195,13 +197,17 @@ char CAN0_latest(struct CAN_frame * const f)
 	return 1;
 }
 
-char CAN0_poll(struct CAN_frame * const f, long ticks)
+int CAN0_poll(struct CAN_frame * const f, long ticks)
 {
 	while (received == 0) if (ticks-- == 0) return 0;
 	CAN_frame_copy(&RX, f);
 	received = 0;
 	return 1;
 }
+
+code const struct device CAN0 = {
+	CAN0_init, 0, CAN0_latest, 0, CAN0_send
+};
 
 #else	// CAN0_PAGE
 #error	CAN0 not defined (check platform.h includes the correct target definitions)

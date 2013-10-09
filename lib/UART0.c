@@ -84,4 +84,8 @@ int i;
 
 int U0_pending() { return UART_size(256, RX0.head, RX0.tail); }
 
-unsigned char U0_getc() { return RX0.buffer[RX0.tail++]; }
+int U0_getc() { return RX0.buffer[RX0.tail++]; }
+
+code const struct device U0 = {
+	U0_init, U0_pending, U0_getc, 0, U0_puts
+};

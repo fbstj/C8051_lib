@@ -26,4 +26,13 @@ extern char MCP2515_read(const struct MCP2515 * const, struct CAN_frame * const)
 // send the passed frame
 extern void MCP2515_send(const struct MCP2515 * const, const struct CAN_frame * const);
 
+// define a struct device for the MCP2515 `self` with the name passed
+#define MCP2515_device(name, self) \
+	static void name##_init(enum CAN_baud b) { MCP2515_init(&self); MCP2515_baud(&self, b); }\
+	static char name##_read(struct CAN_frame *f) { return MCP2515_read(&self, f); }\
+	static void name##_send(struct CAN_frame *f) { MCP2515_send(&self, f); }\
+	code const struct device name = {\
+		name##_init, 0, name##_read, 0, name##_send\
+	};
+
 #endif // __MCP2515_H

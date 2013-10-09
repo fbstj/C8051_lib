@@ -15,14 +15,16 @@ extern void CAN0_init(const enum CAN_baud);
 /* CAN0_basic.c */
 
 // latest frame to be received on CAN0
-extern char CAN0_latest(struct CAN_frame * const);
+extern int CAN0_latest(struct CAN_frame * const);
 
 // send a frame and wait for a response
 // -- poll(frame to send/fill, timeout)
-extern char CAN0_poll(struct CAN_frame * const, long);
+extern int CAN0_poll(struct CAN_frame * const, long);
 
 // send a message object
-extern void CAN0_send(const struct CAN_frame * const);
+extern int CAN0_send(const struct CAN_frame * const);
+
+extern code const struct device CAN0;
 
 #else	// CAN0_MO
 /* CAN0_mo.c */

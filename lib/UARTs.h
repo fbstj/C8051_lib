@@ -17,7 +17,9 @@ extern int U0_puts(char *, int);
 // check for pending characters
 extern int U0_pending();
 // read a byte
-extern unsigned char U0_getc();
+extern int U0_getc();
+
+extern code const struct device U0;
 
 /*
 	UART1 controls
@@ -28,6 +30,8 @@ extern int U1_puts(char *, int);
 // check for pending characters
 extern int U1_pending();
 // read a byte
-extern unsigned char U1_getc();
+extern int U1_getc();
+
+extern code const struct device U1;
 
 #endif	// __UART_H

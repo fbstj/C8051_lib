@@ -10,4 +10,13 @@
 
 extern Init_Device();			// the Config Wizard entry point
 
+struct device {
+	void (*init)();
+	int (*pending)();
+	int (*read)();
+	int (*sending)();
+	int (*send)();
+	void * etc;
+};
+
 #endif	// __PLATFORM_H
