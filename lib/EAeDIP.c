@@ -79,112 +79,114 @@ static char out[3];
 }
 
 // macros
-#define command(cmd, len)	edip_command(self, #cmd, len)
+#define command(cmd, len, content)\
+	edip_command(self, #cmd, len);\
+	content;\
+	edip_finish(self)
 #define byte(ch)			edip_puts(self, &ch, 1)
 #define word(word)			edip_u16(self, word)
-#define done()				edip_finish(self)
 
 // methods
 void edip_clear(self_t self)
 {	// DL
-	command(DL, 0);
-	done();
+	command(DL, 0, ;);
 }
 
 void edip_terminal(self_t self, char on)
 {	// TA or TE
 	if (on == 0)
-		command(TA, 0);
+	{
+		command(TA, 0, ;);
+	}
 	else
-		command(TE, 0);
-	done();
+	{
+		command(TE, 0, ;);
+	}
 }
 
 void edip_font(self_t self, unsigned char font)
 {	// ZF<font>
-	command(ZF,1);
-	byte(font);
-	done();
+	command(ZF,1, byte(font));
 }
 
 void edip_font_color(self_t self, unsigned char fg, unsigned char bg)
 {	// FZ<fg><bg>
-	command(FZ, 2);
-	byte(fg); byte(bg);
-	done();
+	command(FZ, 2,
+		byte(fg); byte(bg);
+	);
 }
 
 void edip_font_zoom(self_t self, unsigned char x, unsigned char y)
 {	// ZZ<x><y>
-	command(ZZ, 2);
-	byte(x); byte(y);
-	done();
+	command(ZZ, 2,
+		byte(x); byte(y);
+	);
 }
 
 void edip_draw(self_t self, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2)
 {	// GR<x1_lo><x1_hi><y1_lo><y1_hi><x2_lo><x2_hi><y2_lo><y2_hi>
-	command(GR, 8);
-	word(x1);	word(y1);
-	word(x2);	word(y2);
-	done();
+	command(GR, 8,
+		word(x1);	word(y1);
+		word(x2);	word(y2);
+	);
 }
 
 void edip_fill(self_t self, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, unsigned char color)
 {	// RF<x1_lo><x1_hi><y1_lo><y1_hi><x2_lo><x2_hi><y2_lo><y2_hi><color>
-	command(RF, 9);
-	word(x1);	word(y1);
-	word(x2);	word(y2);
-	byte(color);
-	done();
+	command(RF, 9,
+		word(x1);	word(y1);
+		word(x2);	word(y2);
+		byte(color);
+	);
 }
 
 void edip_delete(self_t self, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2)
 {	// RL<x1_lo><x1_hi><y1_lo><y1_hi><x2_lo><x2_hi><y2_lo><y2_hi>
-	command(RL, 8);
-	word(x1);	word(y1);
-	word(x2);	word(y2);
-	done();
+	command(RL, 8,
+		word(x1);	word(y1);
+		word(x2);	word(y2);
+	);
 }
 
 void edip_text(self_t self, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, unsigned char pos, char *str)
 {	// ZB<x1_lo><x1_hi><y1_lo><y1_hi><x2_lo><x2_hi><y2_lo><y2_hi><pos><string...>\0
 unsigned char length = strlen(str);
-	command(ZB, 10 + length);
-	word(x1);	word(y1);
-	word(x2);	word(y2);
-	byte(pos);
-	edip_puts(self, str, length);
-	length = '\n';	byte(length);
-	done();
+	command(ZB, 10 + length,
+		word(x1);	word(y1);
+		word(x2);	word(y2);
+		byte(pos);
+		edip_puts(self, str, length);
+		length = 0;	byte(length);
+	);
 }
 
 void edip_clear_keys(self_t self)
 {	// AL\0\1
-	command(AL, 2);
-	edip_puts(self, "\0\1", 2);
-	done();
+	command(AL, 2,
+		edip_puts(self, "\0\1", 2);
+	);
 }
 
 void edip_button(self_t self, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, unsigned char down, unsigned char up, char *str)
 {	// AT<x1_lo><x1_hi><y1_lo><y1_hi><x2_lo><x2_hi><y2_lo><y2_hi><down><up><string...>\0
 unsigned char length = strlen(str);
-	command(AT, 12 + length);
-	word(x1);	word(y1);
-	word(x2);	word(y2);
-	byte(down);	byte(up);
-	edip_puts(self, str, length);
-	length = 0;	byte(length);
-	done();
+	command(AT, 12 + length,
+		word(x1);	word(y1);
+		word(x2);	word(y2);
+		byte(down);	byte(up);
+		edip_puts(self, str, length);
+		length = 0;	byte(length);
+	);
 }
 
 void edip_switch(self_t self, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, unsigned char down, unsigned char up, char *str)
 {	// AK<x1_lo><x1_hi><y1_lo><y1_hi><x2_lo><x2_hi><y2_lo><y2_hi><down><up><string...>\0
 unsigned char length = strlen(str);
-	command(AK, 12 + length);
-	word(x1);	word(y1);
-	word(x2);	word(y2);
-	byte(down);	byte(up);
-	edip_puts(self, str, length);
-	length = 0;	byte(length);
-	done();
+	command(AK, 12 + length,
+		word(x1);	word(y1);
+		word(x2);	word(y2);
+		byte(down);	byte(up);
+		edip_puts(self, str, length);
+		length = 0;	byte(length);
+	);
 }
