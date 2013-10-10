@@ -91,6 +91,15 @@ void edip_clear(self_t self)
 	done();
 }
 
+void edip_terminal(self_t self, char on)
+{	// TA or TE
+	if (on == 0)
+		command(TA, 0);
+	else
+		command(TE, 0);
+	done();
+}
+
 void edip_font(self_t self, unsigned char font)
 {	// ZF<font>
 	command(ZF,1);
@@ -126,6 +135,14 @@ void edip_fill(self_t self, unsigned int x1, unsigned int y1, unsigned int x2, u
 	word(x1);	word(y1);
 	word(x2);	word(y2);
 	byte(color);
+	done();
+}
+
+void edip_delete(self_t self, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2)
+{	// RL<x1_lo><x1_hi><y1_lo><y1_hi><x2_lo><x2_hi><y2_lo><y2_hi>
+	command(RL, 8);
+	word(x1);	word(y1);
+	word(x2);	word(y2);
 	done();
 }
 

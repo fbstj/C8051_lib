@@ -41,6 +41,8 @@ enum EDIP {
 
 // clear the screen
 void edip_clear(const struct EDIP *);
+// turn the terminal on or off
+void edip_terminal(const struct EDIP *, char on);
 // select a font
 void edip_font(const struct EDIP *, unsigned char font);
 // font_color(lcd, foreground, background);
@@ -51,6 +53,8 @@ void edip_font_zoom(const struct EDIP *, unsigned char, unsigned char);
 void edip_draw(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int);
 // text(lcd, x1, y1, x2, y2, color)
 void edip_fill(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char);
+// text(lcd, x1, y1, x2, y2, color)
+void edip_delete(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int);
 // text(lcd, x1, y1, x2, y2, position, string)
 void edip_text(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, char *);
 // remove touch keys
