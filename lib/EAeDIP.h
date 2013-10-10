@@ -4,12 +4,6 @@
 
 extern void edip_init();
 
-struct EDIP {
-	int (*puts)(char *, int);
-	int (*pending)();
-	unsigned char (*getc)();
-};
-
 enum EDIP {
 	TOP = 0, MIDDLE = 3, BOTTOM = 6,
 	LEFT = 1, CENTER = 2, RIGHT = 3,
@@ -40,26 +34,26 @@ enum EDIP {
 };
 
 // clear the screen
-void edip_clear(const struct EDIP *);
+void edip_clear(const struct device *);
 // turn the terminal on or off
-void edip_terminal(const struct EDIP *, char on);
+void edip_terminal(const struct device *, char on);
 // select a font
-void edip_font(const struct EDIP *, unsigned char font);
+void edip_font(const struct device *, unsigned char font);
 // font_color(lcd, foreground, background);
-void edip_font_color(const struct EDIP *, unsigned char, unsigned char);
+void edip_font_color(const struct device *, unsigned char, unsigned char);
 // font_zoom(lcd, x, y)
-void edip_font_zoom(const struct EDIP *, unsigned char, unsigned char);
+void edip_font_zoom(const struct device *, unsigned char, unsigned char);
 // text(lcd, x1, y1, x2, y2)
-void edip_draw(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int);
+void edip_draw(const struct device *, unsigned int, unsigned int, unsigned int, unsigned int);
 // text(lcd, x1, y1, x2, y2, color)
-void edip_fill(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char);
+void edip_fill(const struct device *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char);
 // text(lcd, x1, y1, x2, y2, color)
-void edip_delete(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int);
+void edip_delete(const struct device *, unsigned int, unsigned int, unsigned int, unsigned int);
 // text(lcd, x1, y1, x2, y2, position, string)
-void edip_text(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, char *);
+void edip_text(const struct device *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, char *);
 // remove touch keys
-void edip_clear_keys(const struct EDIP *);
+void edip_clear_keys(const struct device *);
 // switch(lcd, x1, y1, x2, y2, down, up, string)
-void edip_switch(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, unsigned char, char *);
+void edip_switch(const struct device *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, unsigned char, char *);
 // button(lcd, x1, y1, x2, y2, down, up, string)
-void edip_button(const struct EDIP *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, unsigned char, char *);
+void edip_button(const struct device *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, unsigned char, char *);

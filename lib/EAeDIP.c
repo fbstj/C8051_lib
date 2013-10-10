@@ -1,16 +1,17 @@
 /*
 	library for communicating with EA DIP LCD screen
 */
+#include "platform.h"
 #include "EAeDIP.h"
 
 enum chars {
-	DC1 = 0x11,
-	DC2 = 0x12,
-	ACK = 0x06,
-	ESC = 0x1B
+	_DC1 = 0x11,
+	_DC2 = 0x12,
+	_ACK = 0x06,
+	_ESC = 0x1B
 };
 
-typedef const struct EDIP * self_t;
+typedef const struct device * self_t;
 #define LCD_timeout		5000
 #define LCD_resetSleep	100000
 
@@ -23,48 +24,48 @@ static char edip_ack(self_t self)
 {
 char ack;
 unsigned int timeout = 0;
-	while ((ack != ACK) && (timeout < LCD_timeout))
+	while ((ack != _ACK) && (timeout < LCD_timeout))
 		if(self->pending())
-			ack = self->getc();
+			ack = self->read();
 		else
 			++timeout;
 	sleep(1000);
-	return !(timeout < LCD_timeout && ack == ACK);
+	return !(timeout < LCD_timeout && ack == _ACK);
 }
 
-static void edip_start(self_t self, unsigned char length)
+static void edip_start(self_t self, int length)
 {
 static char out[2];
-	out[0] = DC1;
+	out[0] = _DC1;
 	out[1] = length;
-	self->puts(out, 2);
-	check = DC1 + length;
+	self->send(out, 2);
+	check = _DC1 + length;
 }
 
-static void edip_puts(self_t self, char * buf, unsigned char length)
+static void edip_puts(self_t self, const char * buf, int length)
 {
 unsigned char i;
 	for (i = 0; i < length; i++)
 	{
 		check += buf[i];
 	}
-	self->puts(buf, length);
+	self->send(buf, length);
 }
 
 static char edip_finish(self_t self)
 {
-	self->puts(&check, 1);
+	self->send(&check, 1);
 	return edip_ack(self);
 }
 
 // helpers
 #include <string.h>
 
-static void edip_command(self_t self, char cmd[2], unsigned char length)
+static void edip_command(self_t self, char cmd[2], int length)
 {
 static char out[4];
 	edip_start(self, length + 3);
-	out[0] = ESC;
+	out[0] = _ESC;
 	out[1] = cmd[0];
 	out[2] = cmd[1];
 	out[3] = 0;
