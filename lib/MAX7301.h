@@ -6,8 +6,12 @@
 
 struct MAX7301 {
 	// exchange a word with the device (including chip selection)
-	unsigned int (*word)(unsigned int);
+	char (*command)(char, char);
 };
+
+#define MAX7301_new(name, cs, byte)\
+	static char name##_word(char cmd, char value) { cs = 0; byte(cmd); value = byte(value); cs = 1; return value; }\
+	code const struct MAX7301 name = { name##_word }
 
 // start the MAX7301  device
 extern void MAX7301_init(const struct MAX7301 * const);
