@@ -2,7 +2,6 @@
 	A low level driver for UART0 on C8051F580
 */
 #include "platform.h"
-#include "buffers.h"
 #include "UARTs.h"
 
 static struct UART_MEM TX0, RX0;
