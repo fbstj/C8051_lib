@@ -17,6 +17,11 @@ struct M95256 {
 	unsigned char (*byte)(unsigned char);
 };
 
+#define M95256_new(name, cs, byte)\
+	static void name##_select() { cs = 0; }\
+	static void name##_deselect() { cs = 1; }\
+	code const struct M95256 name = { name##_select, name##_deselect, byte }
+
 // read bytes into a buffer
 //		from `address` to `address + length`
 // -- load(self, address, buffer, length);
