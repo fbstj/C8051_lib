@@ -81,8 +81,6 @@ static struct {
 } _;
 unsigned char dummy;
 unsigned long arb;
-	if (self->irq() == 0)
-		return 0;
 	_.D = frame->Data;
 	// read from correct buffer
 	dummy = get(CANSTAT) >> 1;
