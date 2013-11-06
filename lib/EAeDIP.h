@@ -57,3 +57,5 @@ void edip_clear_keys(const struct device *);
 void edip_switch(const struct device *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, unsigned char, char *);
 // button(lcd, x1, y1, x2, y2, down, up, string)
 void edip_button(const struct device *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned char, unsigned char, char *);
+// brightness(lcd, %)
+void edip_brightness(const struct device *, unsigned char);

@@ -12,13 +12,10 @@ enum chars {
 };
 
 typedef const struct device * self_t;
-#define LCD_timeout		5000
-#define LCD_resetSleep	100000
+#define LCD_timeout		1500
 
 // protocol
 static unsigned char check;
-
-static void sleep(volatile unsigned long x){ while (x--) ; }
 
 static char edip_ack(self_t self)
 {
@@ -29,7 +26,6 @@ unsigned int timeout = 0;
 			ack = self->read();
 		else
 			++timeout;
-	sleep(1000);
 	return !(timeout < LCD_timeout && ack == _ACK);
 }
 
@@ -190,4 +186,9 @@ unsigned char length = strlen(str);
 		edip_puts(self, str, length);
 		length = 0;	byte(length);
 	);
+}
+
+void edip_brightness(self_t self, unsigned char brightness)
+{	// YH<brightness>
+	command(YH, 1, byte(brightness));
 }
