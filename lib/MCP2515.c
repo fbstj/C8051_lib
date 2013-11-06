@@ -1,7 +1,6 @@
 /*
 	driver for SPI CAN controller MCP2515
 */
-#include "platform.h"
 #include "MCP2515.h"
 #include "MCP2515_regs.h"
 
@@ -29,6 +28,8 @@ static void SPI_set(const struct MCP2515 * const self, unsigned char const addr,
 #define set(n, v)	SPI_set(self, n, v)
 #define get(n)		SPI_get(self, n)
 
+static struct CAN_frame f;
+
 void MCP2515_send(const struct MCP2515 * const self, const struct CAN_frame * const frame)
 {
 unsigned char txctrl, cRet;
@@ -54,16 +55,26 @@ unsigned char txctrl, cRet;
 		while ((txctrl & TXREQ_SET) && (cRet == 1));
 	}
 
-	set(TXB0EID8, frame->ID >> 19);
-	set(TXB0EID0, frame->ID >> 11);
-	set(TXB0SIDH, frame->ID >> 3);
-	set(TXB0SIDL, ((frame->ID << 5) & 0xC0) | (frame->Extended == 1 ? 8 : 0) | ((frame->ID >> 27) && 3));
+	CAN_frame_copy(frame, &f);
 
-	set(TXB0DLC, (frame->Length & 0xF) | (frame->Remote == 1 ? 0x40 : 0));
-	set(TXB0D0, frame->Data[0]); SPI_set(self, TXB0D1, frame->Data[1]);
-	set(TXB0D2, frame->Data[2]); SPI_set(self, TXB0D3, frame->Data[3]);
-	set(TXB0D4, frame->Data[4]); SPI_set(self, TXB0D5, frame->Data[5]);
-	set(TXB0D6, frame->Data[6]); SPI_set(self, TXB0D7, frame->Data[7]);
+	if (f.Extended == 1)
+	{	// SH SL[7:5] SL[1:0] E8 E0
+		set(TXB0EID0, f.ID);
+		set(TXB0EID8, f.ID >> 8);
+		set(TXB0SIDL, (8 | ((f.ID >> 16) & 3) | ((f.ID >> 13) & 0xE0)));
+		set(TXB0SIDH, f.ID >> 21);
+	}
+	else
+	{
+		set(TXB0SIDH, f.ID >> 3);
+		set(TXB0SIDL, (f.ID << 5) & 0xE0);
+	}
+
+	set(TXB0DLC, (f.Length & 0xF) | (f.Remote == 1 ? 0x40 : 0));
+	set(TXB0D0, f.Data[0]); SPI_set(self, TXB0D1, f.Data[1]);
+	set(TXB0D2, f.Data[2]); SPI_set(self, TXB0D3, f.Data[3]);
+	set(TXB0D4, f.Data[4]); SPI_set(self, TXB0D5, f.Data[5]);
+	set(TXB0D6, f.Data[6]); SPI_set(self, TXB0D7, f.Data[7]);
 
 	set(TXB0CTRL, TXREQ_SET | TXP_INTER_HIGH);
 
@@ -80,8 +91,7 @@ static struct {
 	char * D;
 } _;
 unsigned char dummy;
-unsigned long arb;
-	_.D = frame->Data;
+	_.D = f.Data;
 	// read from correct buffer
 	dummy = get(CANSTAT) >> 1;
 	switch (dummy & 7)
@@ -110,19 +120,21 @@ unsigned long arb;
 		return 0;
 	}
 
-	arb = _.sidl & 3;
-	arb = _.eid8 | (arb << 8);
-	arb = _.eid0 | (arb << 8);
-	arb = _.sidh | (arb << 8);
-	arb = (_.sidl >> 5) | (arb << 3);
-
-	frame->Extended = ((_.sidl  & 8) == 0) ? 0 : 1;
-	frame->Remote = ((_.ctrl & 8) == 0) ? 0 : 1;
-	frame->ID = arb;
-	frame->Length = _.dlc & 0xF;
+	f.Extended = ((_.sidl  & 8) == 0) ? 0 : 1;
+	f.Remote = ((_.ctrl & 8) == 0) ? 0 : 1;
+	f.ID = (_.sidh << 3) | (_.sidl >> 5);
+	if (f.Extended == 1)
+	{
+		f.ID = (_.sidl & 3) | (f.ID << 2);
+		f.ID = _.eid8 | (f.ID << 8);
+		f.ID = _.eid0 | (f.ID << 8);
+	}
+	f.Length = _.dlc & 0xF;
 
 	// clear SPI CAN interrupts
 	set(CANINTF, 0);
+
+	CAN_frame_copy(&f, frame);
 	return 1;
 }
 
