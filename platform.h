@@ -18,5 +18,6 @@ struct device {
 	int (*send)();
 	void * etc;
 };
+typedef const struct device * device_pt;
 
 #endif	// __PLATFORM_H
