@@ -3,19 +3,12 @@
 */
 #ifndef __TSYS01_H
 #define __TSYS01_H
+#include "SPI.h"
 
-struct TSYS01 {
-	unsigned char (*byte)(unsigned char);
-	void (*select)();
-	void (*deselect)();
-	char (*pin)();
-	unsigned int regs[8];
-};
+extern void TSYS01_init(spi_pt, unsigned char[]);
 
-extern void TSYS01_init(struct TSYS01 *);
+extern long TSYS01_read(spi_pt);
 
-extern long TSYS01_read(struct TSYS01 *);
-
-extern float TSYS01_poly(struct TSYS01 *, int);
+extern float TSYS01_poly(spi_pt, int);
 
 #endif	// __TSYS01_h
