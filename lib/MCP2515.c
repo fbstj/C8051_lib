@@ -6,7 +6,7 @@
 
 #define SELECT(action) self->select(); action; self->deselect()
 
-static unsigned char SPI_get(const struct MCP2515 * const self, unsigned char addr)
+static unsigned char SPI_get(spi_pt self, unsigned char addr)
 {
 	SELECT(
 		self->byte(CAN_READ);
@@ -16,7 +16,7 @@ static unsigned char SPI_get(const struct MCP2515 * const self, unsigned char ad
 	);
 	return addr;
 }
-static void SPI_set(const struct MCP2515 * const self, unsigned char const addr, unsigned char const value )
+static void SPI_set(spi_pt self, unsigned char const addr, unsigned char const value )
 {
 	SELECT(
 		self->byte(CAN_WRITE);
@@ -30,7 +30,7 @@ static void SPI_set(const struct MCP2515 * const self, unsigned char const addr,
 
 static struct CAN_frame f;
 
-void MCP2515_send(const struct MCP2515 * const self, const struct CAN_frame * const frame)
+void MCP2515_send(spi_pt self, const struct CAN_frame * const frame)
 {
 unsigned char txctrl, cRet;
 	//Read TX Status
@@ -84,10 +84,10 @@ unsigned char txctrl, cRet;
 	self->deselect();
 }
 
-char MCP2515_read(const struct MCP2515 * const self, struct CAN_frame * const frame)
+char MCP2515_read(spi_pt self, struct CAN_frame * const frame)
 {
 static struct {
-	char ctrl, sidh, sidl, eid8, eid0, dlc;
+	char ctrl, eid8, eid0, sidh, sidl, dlc;
 	char * D;
 } _;
 unsigned char dummy;
@@ -138,7 +138,7 @@ unsigned char dummy;
 	return 1;
 }
 
-void MCP2515_baud(const struct MCP2515 * const self, const enum CAN_baud baud)
+void MCP2515_baud(spi_pt self, const enum CAN_baud baud)
 {
 unsigned char old;
 	old = get(CANCTRL);
@@ -154,7 +154,7 @@ unsigned char old;
 	set(CANCTRL, old);
 }
 
-void MCP2515_init(const struct MCP2515 * const self)
+void MCP2515_init(spi_pt self)
 {
 	// enter config mode
 	set(CANCTRL, REQOP_CONFIG);

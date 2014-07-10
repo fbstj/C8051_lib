@@ -5,24 +5,16 @@
 #define __MCP2515_H
 
 #include "CAN_bus.h"
-
-struct MCP2515 {
-	// chip select
-	void (*select)();
-	// chip unselect
-	void (*deselect)();
-	// exchange a word with the device
-	unsigned char (*byte)(unsigned char);
-};
+#include "SPI.h"
 
 // initialises the spi device as a MCP2515 device
-extern void MCP2515_init(const struct MCP2515 * const);
+extern void MCP2515_init(spi_pt);
 // set the spi device to the baud rate passed
-extern void MCP2515_baud(const struct MCP2515 * const, const enum CAN_baud);
+extern void MCP2515_baud(spi_pt, const enum CAN_baud);
 // check for a new frame
-extern char MCP2515_read(const struct MCP2515 * const, struct CAN_frame * const);
+extern char MCP2515_read(spi_pt, struct CAN_frame * const);
 // send the passed frame
-extern void MCP2515_send(const struct MCP2515 * const, const struct CAN_frame * const);
+extern void MCP2515_send(spi_pt, const struct CAN_frame * const);
 
 #define MCP2515_device(name, self, irq, reset)\
 	static void name##_init(enum CAN_baud b) { reset = 0; reset = 1; MCP2515_init(&self); MCP2515_baud(&self, b); }\
