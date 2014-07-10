@@ -14,7 +14,7 @@ enum M95256_INSTRUCTIONS {
 
 #define SELECT(action) self->select(); action; self->deselect()
 
-void M95256_load( const struct M95256 * const self, const unsigned int address, unsigned char * const buffer, const unsigned char length)
+void M95256_load(spi_pt self, const unsigned int address, unsigned char * const buffer, const unsigned int length)
 {
 unsigned char i;
 
@@ -31,7 +31,7 @@ unsigned char i;
 	);
 }
 
-void M95256_save(const struct M95256 * const self, const unsigned int address, const unsigned char * const buffer, unsigned char length)
+void M95256_save(spi_pt self, const unsigned int address, const unsigned char * const buffer, unsigned int length)
 {
 unsigned char i;
 extern void sleep(volatile unsigned long);
