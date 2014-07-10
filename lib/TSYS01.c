@@ -10,7 +10,9 @@ static char i;
 static unsigned int v;
 	self->select();
 	self->byte(0x1E);
-	while (self->pin() == 0);
+
+	while (self->pin() == 0) ;
+
 	self->deselect();
 
 	for (i = 0; i < 8; i++)
