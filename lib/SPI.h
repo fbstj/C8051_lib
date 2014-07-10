@@ -12,4 +12,9 @@ struct spi_device {
 };
 typedef const struct spi_device * spi_pt;
 
+#define SPI_device(name, init, enter, exit, byte)\
+	static void name##_sel() enter \
+	static void name##_des() exit \
+	const struct spi_device name = { init, name##_sel, name##_des, byte }
+
 #endif // __SPI_H
