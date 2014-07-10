@@ -93,5 +93,5 @@ int U1_pending() { return UART_size(256, RX1.head, RX1.tail); }
 int U1_getc() { return RX1.buffer[RX1.tail++]; }
 
 code const struct device U1 = {
-	U1_init, U1_pending, U1_getc, 0, U1_puts
+	U1_init, U1_pending, U1_getc, 0, U1_puts, U1_ISR
 };

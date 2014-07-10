@@ -16,6 +16,7 @@ struct device {
 	int (*read)();
 	int (*sending)();
 	int (*send)();
+	void (*isr)();
 	void * etc;
 };
 typedef const struct device * device_pt;
