@@ -36,16 +36,18 @@ extern void MAX3100_init(struct MAX3100 * const, const enum E_MAX3100_CONFIGURAT
 // service the device (blocking)
 // - write all tx buffer to the chip
 // - fill rx with any pending data
-extern void MAX3100_isr(struct MAX3100 * const);
+extern void MAX3100_send(struct MAX3100 * const);
 
 // add a string to be sent next time ISR gets called
-extern void MAX3100_puts(struct MAX3100 * const, char *, int);
+extern int MAX3100_puts(struct MAX3100 * const, const char *, int);
 
 // check for characters
-#define MAX3100_pending(self)	RING_count(&self->RX)
+#define MAX3100_pending(self)	UART_size(&self.RX)
 
 // read a string out of the buffer
-#define MAX3100_getc(self)		RING_get(&self->RX)
+#define MAX3100_getc(self)		UART_MEM_get(&self.RX0)
 
+// define a MAX3100 struct device for `self` with the `name` passed
+#define MAX3100_device(name, cs, byte)	;
 
 #endif	// __MAX3100_H

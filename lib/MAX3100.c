@@ -14,25 +14,25 @@ enum E_MAX3100 {
 // rounds down to the nearest usable baud rate, defaults to 230400
 char MAX3100_baud(const long baud)
 {
-#define GET_BAUD_SETTING(o, n) if (baud >= o) return n;
-	GET_BAUD_SETTING(230400,0)
-	GET_BAUD_SETTING(115200,1)
-	GET_BAUD_SETTING(76800, 2)
-	GET_BAUD_SETTING(57600, 3)
-	GET_BAUD_SETTING(38400, 4)
-	GET_BAUD_SETTING(28800, 5)
-	GET_BAUD_SETTING(19200, 6)
-	GET_BAUD_SETTING(14400, 7)
-	GET_BAUD_SETTING(9600,  8)
-	GET_BAUD_SETTING(7200,  9)
-	GET_BAUD_SETTING(4800, 10)
-	GET_BAUD_SETTING(3600, 11)
-	GET_BAUD_SETTING(2400, 12)
-	GET_BAUD_SETTING(1800, 13)
-	GET_BAUD_SETTING(1200, 14)
-	GET_BAUD_SETTING(600,  15)
+#define CASE(o, n) if (baud >= o) return n;
+	CASE(230400,0)
+	CASE(115200,1)
+	CASE(76800, 2)
+	CASE(57600, 3)
+	CASE(38400, 4)
+	CASE(28800, 5)
+	CASE(19200, 6)
+	CASE(14400, 7)
+	CASE(9600,  8)
+	CASE(7200,  9)
+	CASE(4800, 10)
+	CASE(3600, 11)
+	CASE(2400, 12)
+	CASE(1800, 13)
+	CASE(1200, 14)
+	CASE(600,  15)
 	return 0;
-#undef GET_BAUD_SETTING
+#undef CASE
 }
 
 /* example word function for SPI0
@@ -74,4 +74,14 @@ void MAX3100_send(struct MAX3100 * const self)
 		self->word(SEND | self->TX.buffer[self->TX.tail++]);
 	}
 	MAX3100_irq(self);
+}
+
+int MAX3100_puts(struct MAX3100 * const self, const char * string, int length)
+{
+int i;
+
+	for (i = 0; i < length; i++)
+		self->TX.buffer[self->TX.head++] = string[i];
+	MAX3100_send(self);
+	return i;
 }
